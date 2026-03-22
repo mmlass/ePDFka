@@ -1,1615 +1,2387 @@
+<!DOCTYPE html>
 <html lang="cs">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📄</text></svg>">
-    <title>ePDFka</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-    <script src="https://unpkg.com/pdf-lib@1.17.0/dist/pdf-lib.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
-    
-    
-    
-    <style>
- 
-        :root{
-      /* Barvy stránek */
-      --bg1:#00AF3F;  /* zelená */
-      --bg2:#000099;  /* tmavě modrá */
-      --accent:#F9E300;   /* medová žlutá (detail) */
-      --white:#ffffff;
-      --ink:#222;
-      --ink-dim:#666;
-      --glass: rgba(255,255,255,.92);
-      --shadow: 0 18px 40px rgba(0,0,0,.18);
-      --radius: 22px;
-      --gap: clamp(14px, 2.2vw, 22px);
-      --cellSize: clamp(140px, 22vw, 220px);
-      --transition: .28s cubic-bezier(.2,.7,.2,1);
-    }
-
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 100%);
-            min-height: 100vh;
-            color: #333;
-            padding: 20px 0;
-            overflow-x: hidden;
-        }
-
-                
-        .main-wrapper {
-            display: flex;
-            align-items: flex-start;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-
-        .container {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            max-width: 800px;
-            width: 90%;
-            backdrop-filter: blur(10px);
-        }
-
-
-        .container.expanded {
-            width: 100%;
-            max-width: none;
-            border-radius: 0;
-            padding: 5px;
-            height: 90vh; /* přidáno */
-            
-        }
-
-
-
-        .controls-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 20px 0;
-            flex-wrap: wrap;
-        }
-
-
-        .header {
-            text-align: center;
-            margin-bottom: 5px;
-        }
-
-        .header.expanded {
-            /* text-align: left;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2px;*/
-            display: none;
-        }
-
-
-
-        .header h1 {
-            font-size: 2.2em;
-            color: #333;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 10px;
-        }
-
-        .header.expanded h1 {
-            /*font-size: 1em;
-            margin-bottom: 0;*/
-            display: none;
-        }
-
-
-        .emoji {
-            font-size: 1.2em;
-        }
-
-        
-        .subtitle {
-            color: #666;
-            font-size: 1.1em;
-           margin-bottom: 10px;
-        }
-
-
-        .function-grid {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 30px;
-            margin-bottom: 10px;
-            padding: 20px;
-            flex-wrap: wrap;
-        }
-        /*XXXXXX*/
-       /* .function-grid.expanded {
-            display: 0.6em;
-        }*/
-
-
-        .function-card {
-            aspect-ratio: 1;
-            background: white;
-            /* Vytvoření pravidelného osmiúhelníku pomocí clip-path */
-            clip-path: polygon(
-                30% 0%, 
-                70% 0%, 
-                100% 30%, 
-                100% 70%, 
-                70% 100%, 
-                30% 100%, 
-                0% 70%, 
-                0% 30%
-            );
-            padding: 40px 30px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 3px solid transparent;
-            /* Zvýšení výšky na 1.5násobek původní */
-            max-height: 200px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            position: relative;
-
-        }
-        
-        
-        
-        .function-card.expanded {
-           /* width: 100px; /* Poloviční šířka */
-           /* height: 100px; /* Poloviční výška */
-           /*  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); /* Zachování šestiúhelníku */
-           /* font-size: 10px; /* Zmenšené písmo */
-           /* box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
-            display.function-description  */  
-            display: none;
-        }
-
-         /*není potřeba protože se nezobrazuje */
-        .function-card.expanded .function-description {
-            display: none; /* Skryje element function-description */
-        }
-
-
-
-        .function-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-            background: color-mix(in oklab, var(--glass)  , var(--accent));
-            
-        }
-
-        .function-card.active {            
-            background: color-mix(in oklab, var(--glass) 90%, var(--accent));
-        }
-
-        .function-title {
-            font-size: 1.3em;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: #333;
-        }
-
-        .function-description {
-            color: #666;
-            line-height: 1.5;
-            font-size: 0.75em;
-        }
-
-        .workspace {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-            min-height: 400px;
-            display: none;
-        }
-
-        .workspace.active {
-            display: block;
-        }
-
-        .upload-area {
-            border: 2px dashed #667eea;
-            border-radius: 2px;
-            padding: 2px;
-            text-align: center;
-            margin-bottom: 2px;
-            transition: all 0.3s ease;
-        }
-
-
-        .upload-area.expanded {
-            margin: 0px 0;
-            padding: 2px;
-            margin-bottom: 5px;
-            max-height: 75px;
-            font-size: 0.6em;
-            
-
-        }
-
-
-        .upload-area:hover {
-            border-color: #4c63d2;
-            background: #f8f9ff;
-        }
-
-        .upload-area.dragover {
-            border-color: #4c63d2;
-            background: #f0f4ff;
-        }
-
-        .upload-button {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1em;
-            transition: background 0.3s ease;
-            margin: 10px;
-        }
-
-        .upload-button:hover {
-            background: #4c63d2;
-        }
-
-        .file-list {
-            margin: 20px 0;
-        }
-
-        .file-item {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 10px 0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-left: 4px solid #667eea;
-            cursor: move;
-        }
-        
-        .file-item.dragging {
-            opacity: 0.5;
-        }
-
-        .file-name {
-            font-weight: 500;
-            color: #333;
-        }
-
-        .file-size {
-            color: #666;
-            font-size: 0.9em;
-        }
-
-        .remove-file {
-            background: #e74c3c;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.85em;
-        }
-
-        .remove-file:hover {
-            background: #c0392b;
-        }
-
-        .controls {
-            display: flex;
-            gap: 15px;
-            margin: 20px 0;
-            flex-wrap: wrap;
-        }
-
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .control-label {
-            font-weight: 500;
-            color: #333;
-            font-size: 0.9em;
-        }
-
-        .control-input {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 0.9em;
-        }
-
-        .control-input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .action-button {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 1.1em;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            margin: 10px 5px;
-        }
-
-        .action-button:hover {
-            background: #4c63d2;
-            transform: translateY(-2px);
-        }
-
-        .action-button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .preview-area {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .page-preview {
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            padding: 10px;
-            text-align: center;
-            cursor: move;
-            transition: all 0.3s ease;
-            background: white;
-        }
-        
-        .page-preview.dragging {
-            opacity: 0.5;
-        }
-
-
-        .page-preview:hover {
-            border-color: #667eea;
-            transform: scale(1.05);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .page-preview.selected {
-            border-color: #667eea;
-            background: #f8f9ff;
-        }
-
-        .page-number {
-            font-size: 0.8em;
-            color: #666;
-            margin-top: 5px;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 6px;
-            background: #e9ecef;
-            border-radius: 3px;
-            overflow: hidden;
-            margin: 20px 0;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        .status-message {
-            text-align: center;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 15px 0;
-            font-weight: 500;
-        }
-
-        .status-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .status-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .status-info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-
-        .comparison-area {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin: 20px 0;
-        }
-
-        .comparison-side {
-            border: 2px dashed #ddd;
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            min-height: 200px;
-        }
-
-        .comparison-side.has-file {
-            border-color: #667eea;
-            background: #f8f9ff;
-        }
-
-        .footer {
-            text-align: center;
-            margin-top: 20px;
-            padding-top:10px;
-            border-top: 1px solid #eee;
-            color: #666;
-            font-size: 0.9em;
-        }
-
-        .rotation-controls {
-            display: flex;
-            gap: 10px;
-            margin: 10px 0;
-        }
-
-        .rotate-button {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9em;
-        }
-
-        .rotate-button:hover {
-            background: #218838;
-        }
-        
-
-
-        .deletePage-button {
-            background: white;
-            color: #FF0000;
-            border: none;           
-        }
-
-        .deletePage-button:hover {
-            background: #ffff00;
-        }
-
-        canvas {
-            max-width: 100%;
-            height: auto;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        
-        .page-preview {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        
-        .back-button {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 2px 5px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9em;
-            display: none;
-            margin-bottom: 5px;
-        }
-
-        .back-button:hover {
-            background: #4c63d2;
-        }
-
-        
-        
-        .back-button.expanded {
-            display: inline-block;
-            position: fixed;
-            top: 0;
-            left: 0;
-            margin: 10px;
-            z-index: 1000; /* aby bylo nad ostatními prvky */
-        }
-
-
-        .poznamka-button {
-            background: #eadf66;
-            color: #667eea;
-            border: none;
-            padding: 2px 5px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9em;
-            display: none;
-            margin-bottom: 5px;
-        }
-
-        .poznamka-button:hover {
-            background: #eadf66;
-        }
-
-       .poznamka-button.expanded {
-            display: inline-block;
-            position: fixed;
-            top: 0;
-            right: 0;
-            margin: 10px;
-            z-index: 1000; /* aby bylo nad ostatními prvky */
-        }
-        
-
-
-
-         .file-list.expanded {
-            /*margin: 10px 0;
-            font-size: 0.6em;*/
-            display: none;
-        }
-
-
-        .main-function-grid.expanded {            
-            display: none;
-        }
-
-
-        
-
-
-
-        #pdf-container {
-           margin-top: 20px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 10px;
-            min-height: 100px;
-            transition: all 0.3s ease;
-        }
-
-        #pdf-container.expanded {
-           height: 100%;
-           width: 100%;
-           margin-top: 2px;
-           padding: 2px;
-            
-        
-        }
-
-        #pdf-viewer {
-            width: 100%;
-            height: 100%;/*1000px;*/
-            border: none;            
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 20px;
-                margin: 20px;
-            }
-            
-            .function-grid {
-                flex-direction: column;
-                align-items: center;
-                gap: 20px;
-            }
-            
-            .comparison-area {
-                grid-template-columns: 1fr;
-            }
-
-            .header.expanded h1 {
-                margin-bottom: 7px;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ePDFka</title>
+<!-- Favicon jako hexagon s ikonou PDF -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📄</text></svg>">
+
+<!-- Načítám PDF knihovny z CDN — pouze JS kód, žádná moje data se tam neposílají -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+
+<!-- Písma z Google Fonts — stáhnou se jen jednou při prvním načtení -->
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════════════
+   CSS PROMĚNNÉ — moje barevná paleta a sdílené hodnoty
+   Změním tady a změní se všude
+   ═══════════════════════════════════════════════ */
+:root {
+  --zelena: #00AF3F;       /* zelená z loga */
+  --modra:  #000099;       /* tmavě modrá z loga */
+  --zluta:  #F9E300;       /* žlutý akcent (zatím nepoužit, ale mám ho připravený) */
+  --pozadi: #eef1f8;       /* světle šedavě modrá — základ stránky */
+  --bila:   #ffffff;
+  --text:   #1a1a2e;       /* skoro černá — hlavní text */
+  --seda:   #6b7280;       /* šedá — popisky, méně důležitý text */
+  --okraj:  #dde3f2;       /* barva rámečků */
+  --polomer: 16px;         /* zaoblení rohů karet */
+  --stin: 0 4px 28px rgba(0,0,40,.09);  /* universální stín */
+  --prechod: .22s cubic-bezier(.2,.7,.2,1); /* animační křivka */
+}
+
+/* ═══════════════════════════════════════════════
+   RESET — nuluju výchozí styly prohlížeče
+   ═══════════════════════════════════════════════ */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+/* ═══════════════════════════════════════════════
+   TĚLO STRÁNKY — základní rozložení
+   ═══════════════════════════════════════════════ */
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--pozadi);
+  min-height: 100vh;
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+/* Jemný barevný přechod v pozadí — jen dekorace, pevně fixovaný při scrollování */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 50% at 10% -5%, rgba(0,175,63,.08) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 45% at 95% 105%, rgba(0,0,153,.07) 0%, transparent 55%);
+}
+
+/* ═══════════════════════════════════════════════
+   CANVAS POZADÍ — hexagonová mřížka s hover efektem
+   Vykresluje se přes <canvas> element pomocí requestAnimationFrame.
+   Při pohybu myši se hexagony pod kurzorem rozsvítí zeleno/modře.
+   Veškerá konfigurace je v JS sekci HEX CANVAS KONFIGURACE.
+   ═══════════════════════════════════════════════ */
+#hex-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none; /* kliknutí propadají na obsah pod canvasem */
+}
+
+/* ═══════════════════════════════════════════════
+   HLAVNÍ KONTEJNER — centruje obsah, drží z-index nad pozadím
+   ═══════════════════════════════════════════════ */
+.app {
+  position: relative; z-index: 1;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px 20px 64px; /* nahoře méně místa */
+}
+
+/* ═══════════════════════════════════════════════
+   HLAVIČKA — zobrazuje se jen v záložkách Spojit a Rozdělit
+   V záložce Čtenář ji skrývám — chci maximální prostor pro PDF
+   ═══════════════════════════════════════════════ */
+.hlavicka {
+  text-align: center;
+  margin-bottom: 16px;
+  animation: nahoruVjezd .5s both;
+}
+
+/* Logo v pilulce — hexagon + název */
+.logo-pilulka {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: var(--bila); border: 1.5px solid var(--okraj);
+  border-radius: 50px; padding: 7px 18px 7px 11px;
+  box-shadow: var(--stin); margin-bottom: 14px;
+}
+
+/* Hexagonový tvar loga pomocí clip-path */
+.hex-logo {
+  width: 34px; height: 34px; position: relative;
+  display: flex; align-items: center; justify-content: center;
+}
+.hex-logo::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, var(--zelena), var(--modra));
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+.hex-logo span { position: relative; font-size: 16px; z-index: 1; }
+.logo-pilulka > span { font-size: .98rem; font-weight: 700; color: var(--text); letter-spacing: -.3px; }
+
+.hlavicka h1 {
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
+  font-weight: 700; letter-spacing: -.8px; color: var(--text); line-height: 1.15;
+}
+/* Gradientní text — "PDF dokumentů" barvím zeleno-modrou */
+.hlavicka h1 em {
+  font-style: normal;
+  background: linear-gradient(90deg, var(--zelena), var(--modra));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.hlavicka p { color: var(--seda); margin-top: 8px; font-size: .88rem; }
+
+/* ═══════════════════════════════════════════════
+   BEZPEČNOSTNÍ ODZNAK — zelená pilulka s pulsujícím bodem
+   Kliknutím otevře modal s vysvětlením bezpečnosti
+   ═══════════════════════════════════════════════ */
+.bezp-odznak {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: rgba(0,175,63,.08); border: 1px solid rgba(0,175,63,.25);
+  border-radius: 50px; padding: 4px 12px; font-size: .74rem;
+  color: #005c1f; font-weight: 600; margin-top: 10px;
+  cursor: pointer; transition: var(--prechod);
+  font-family: 'DM Sans', sans-serif;
+}
+.bezp-odznak:hover { background: rgba(0,175,63,.15); }
+
+/* Pulsující zelená tečka — signalizuje "aktivní/bezpečné" */
+.bezp-tecka {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--zelena);
+  animation: puls 1.8s ease-in-out infinite;
+}
+@keyframes puls {
+  0%,100% { box-shadow: 0 0 0 0 rgba(0,175,63,.5); }
+  50%      { box-shadow: 0 0 0 5px rgba(0,175,63,0); }
+}
+
+/* ═══════════════════════════════════════════════
+   BEZPEČNOSTNÍ MODAL — vyskakovací okno s detaily
+   Zobrazí se po kliknutí na odznak nebo odkaz v patičce
+   ═══════════════════════════════════════════════ */
+.modal-vrstva {
+  display: none; position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,.45); backdrop-filter: blur(4px);
+  align-items: center; justify-content: center; padding: 20px;
+}
+.modal-vrstva.zobraz { display: flex; }
+.modal {
+  background: var(--bila); border-radius: 20px; padding: 28px;
+  max-width: 520px; width: 100%;
+  box-shadow: 0 20px 60px rgba(0,0,0,.2);
+  animation: nahoruVjezd .3s both;
+}
+.modal h2 { font-size: 1.15rem; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+.modal-seznam { list-style: none; display: flex; flex-direction: column; gap: 9px; margin-bottom: 18px; }
+.modal-seznam li { display: flex; align-items: flex-start; gap: 10px; background: var(--pozadi); border-radius: 10px; padding: 10px 13px; font-size: .84rem; line-height: 1.5; }
+.modal-seznam li .ico { font-size: 1.05rem; flex-shrink: 0; margin-top: 1px; }
+.modal-zavreni {
+  width: 100%; padding: 11px; border: none; border-radius: 10px;
+  background: linear-gradient(135deg, var(--zelena), var(--modra));
+  color: #fff; font-family: 'DM Sans', sans-serif;
+  font-size: .9rem; font-weight: 600; cursor: pointer; transition: var(--prechod);
+}
+.modal-zavreni:hover { opacity: .9; }
+
+/* ═══════════════════════════════════════════════
+   NAVIGACE — záložky pro přepínání nástrojů
+   ═══════════════════════════════════════════════ */
+.navigace {
+  display: flex; gap: 7px;
+  background: var(--bila); border: 1.5px solid var(--okraj);
+  border-radius: var(--polomer); padding: 6px;
+  margin-bottom: 16px;
+  box-shadow: var(--stin);
+  animation: nahoruVjezd .5s .1s both;
+}
+.nav-tlacitko {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 10px 8px; border-radius: 11px; border: none;
+  background: none; font-family: 'DM Sans', sans-serif;
+  font-size: .85rem; font-weight: 500; color: var(--seda);
+  cursor: pointer; transition: var(--prechod); white-space: nowrap;
+}
+.nav-tlacitko:hover { background: var(--pozadi); color: var(--text); }
+.nav-tlacitko.aktivni {
+  background: linear-gradient(135deg, var(--zelena), var(--modra));
+  color: #fff; box-shadow: 0 4px 16px rgba(0,0,153,.22);
+}
+
+/* Hexagonová ikonka v navigační záložce */
+.nav-hex {
+  width: 22px; height: 22px; flex-shrink: 0;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .78rem; background: rgba(255,255,255,.22);
+}
+
+/* ═══════════════════════════════════════════════
+   KARTY — bílé boxy s obsahem nástrojů
+   ═══════════════════════════════════════════════ */
+.karta {
+  background: var(--bila); border: 1.5px solid var(--okraj);
+  border-radius: var(--polomer); padding: 20px;
+  box-shadow: var(--stin);
+  animation: nahoruVjezd .4s both;
+}
+
+/* Nadpis karty — s hexagonovým odznakem vlevo */
+.karta-nadpis {
+  font-size: 1rem; font-weight: 700; letter-spacing: -.3px; color: var(--text);
+  margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
+}
+
+/* Hexagonový barevný odznak u nadpisu karty */
+.hex-odznak {
+  width: 26px; height: 26px; flex-shrink: 0;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  background: linear-gradient(135deg, var(--zelena), var(--modra));
+  display: flex; align-items: center; justify-content: center;
+  font-size: .75rem; color: #fff;
+}
+
+/* ═══════════════════════════════════════════════
+   ZÓNA PRO PŘETAŽENÍ SOUBORU
+   Při hover a drag-over se rámečkm zezelená
+   ═══════════════════════════════════════════════ */
+.zona-drop {
+  border: 2px dashed var(--okraj); border-radius: var(--polomer);
+  padding: 28px 20px; text-align: center;
+  cursor: pointer; transition: var(--prechod);
+  background: var(--pozadi); user-select: none;
+}
+.zona-drop:hover, .zona-drop.nad { border-color: var(--zelena); background: rgba(0,175,63,.05); }
+.dz-ikona { font-size: 2rem; margin-bottom: 8px; }
+.dz-text  { font-size: .88rem; color: var(--seda); margin-bottom: 12px; }
+.dz-text strong { color: var(--text); }
+
+/* Tlačítko "Vybrat soubor" uvnitř drop zóny */
+.btn-vyber {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: linear-gradient(135deg, var(--zelena), var(--modra));
+  color: #fff; border: none; padding: 9px 20px; border-radius: 50px;
+  font-family: 'DM Sans', sans-serif; font-size: .86rem; font-weight: 600;
+  cursor: pointer; transition: var(--prechod);
+  box-shadow: 0 4px 14px rgba(0,0,153,.18);
+}
+.btn-vyber:hover { opacity: .9; transform: translateY(-1px); }
+
+/* ═══════════════════════════════════════════════
+   SEZNAM SOUBORŮ — zobrazuje nahrané PDF soubory
+   Každý soubor lze přetáhnout pro změnu pořadí
+   ═══════════════════════════════════════════════ */
+.seznam-souboru { margin-top: 14px; display: flex; flex-direction: column; gap: 7px; }
+.polozka-souboru {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--pozadi); border: 1.5px solid var(--okraj);
+  border-radius: 11px; padding: 10px 12px;
+  cursor: move; transition: var(--prechod);
+}
+.polozka-souboru:hover { border-color: rgba(0,175,63,.4); }
+.polozka-souboru.tahana { opacity: .35; }
+
+/* Hexagonová ikonka souboru */
+.soubor-hex {
+  width: 34px; height: 34px; flex-shrink: 0;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  background: linear-gradient(135deg, rgba(0,175,63,.18), rgba(0,0,153,.12));
+  display: flex; align-items: center; justify-content: center; font-size: 1rem;
+}
+.soubor-info { flex: 1; min-width: 0; }
+.soubor-nazev { font-weight: 600; font-size: .86rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.soubor-meta  { font-size: .73rem; color: var(--seda); margin-top: 2px; font-family: 'DM Mono', monospace; }
+.soubor-akce  { display: flex; gap: 5px; flex-shrink: 0; }
+
+/* Malá kulatá tlačítka pro akce nad souborem */
+.ic-btn {
+  width: 28px; height: 28px; border-radius: 7px; border: none;
+  cursor: pointer; font-size: .82rem; transition: var(--prechod);
+  display: flex; align-items: center; justify-content: center;
+}
+.ic-posun   { background: rgba(0,175,63,.11); color: var(--zelena); }
+.ic-posun:hover { background: rgba(0,175,63,.24); }
+.ic-posun:disabled { opacity: .3; cursor: default; }
+.ic-smazat  { background: rgba(231,76,60,.09); color: #e74c3c; }
+.ic-smazat:hover { background: rgba(231,76,60,.2); }
+
+/* ═══════════════════════════════════════════════
+   MŘÍŽKA NÁHLEDŮ STRÁNEK
+   Scrollovatelná mřížka miniatur PDF stránek
+   ═══════════════════════════════════════════════ */
+.mrizka-nahledu {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: 12px; margin-top: 16px;
+  max-height: 440px; overflow-y: auto; padding-right: 4px;
+}
+/* Tenký scrollbar — nechci tam velkou šedou lištu */
+.mrizka-nahledu::-webkit-scrollbar { width: 4px; }
+.mrizka-nahledu::-webkit-scrollbar-track { background: var(--pozadi); border-radius: 10px; }
+.mrizka-nahledu::-webkit-scrollbar-thumb { background: var(--okraj); border-radius: 10px; }
+
+/* Jedna karta náhledu stránky */
+.nahled-stranky {
+  border: 2px solid var(--okraj); border-radius: 10px;
+  padding: 8px 7px 9px; background: #fff; text-align: center;
+  cursor: move; transition: var(--prechod);
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+}
+.nahled-stranky:hover { border-color: var(--zelena); box-shadow: 0 4px 14px rgba(0,175,63,.14); transform: translateY(-2px); }
+.nahled-stranky.tahana { opacity: .35; border-style: dashed; }
+.nahled-stranky canvas { max-width: 100%; border-radius: 4px; border: 1px solid var(--okraj); }
+.nahled-popisek { font-size: .66rem; color: var(--seda); line-height: 1.3; }
+
+/* Řádek s pořadovým číslem — hexagon + editovatelné pole */
+.poradi-radek { display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; }
+
+/* Hexagonový odznak s číslem pořadí stránky ve výsledku */
+.hex-cislo {
+  width: 22px; height: 22px; flex-shrink: 0;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  background: linear-gradient(135deg, var(--zelena), var(--modra));
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: .6rem; font-weight: 700; font-family: 'DM Mono', monospace;
+}
+
+/* Políčko kam mohu přepsat číslo pro přesun stránky na danou pozici */
+.pole-pozice {
+  width: 34px; padding: 2px 3px;
+  border: 1.5px solid var(--okraj); border-radius: 5px;
+  font-family: 'DM Mono', monospace; font-size: .68rem;
+  text-align: center; outline: none; transition: var(--prechod);
+  font-weight: 600; color: var(--text); background: var(--pozadi);
+}
+.pole-pozice:focus { border-color: var(--zelena); background: #fff; }
+
+/* Ovládací tlačítka pod náhledem stránky */
+.ctrl-nahledu { display: flex; gap: 3px; flex-wrap: wrap; justify-content: center; }
+.tc {
+  font-size: .62rem; padding: 3px 6px; border-radius: 5px; border: none;
+  cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 600; transition: var(--prechod);
+}
+.tc-posun { background: rgba(0,175,63,.11); color: var(--zelena); }
+.tc-posun:hover { background: rgba(0,175,63,.26); }
+.tc-posun:disabled { opacity: .25; cursor: default; }
+.tc-otoceni { background: rgba(0,0,153,.08); color: var(--modra); }
+.tc-otoceni:hover { background: rgba(0,0,153,.18); }
+.tc-smazat { background: rgba(231,76,60,.09); color: #e74c3c; }
+.tc-smazat:hover { background: rgba(231,76,60,.22); }
+
+/* ═══════════════════════════════════════════════
+   OVLÁDACÍ PRVKY — pole pro název souboru, rozsahy atd.
+   ═══════════════════════════════════════════════ */
+.ovladaci-radek { display: flex; align-items: flex-end; gap: 14px; margin-top: 18px; flex-wrap: wrap; }
+.pole { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 200px; }
+.pole label { font-size: .78rem; font-weight: 600; color: var(--seda); letter-spacing: .3px; }
+.pole input {
+  padding: 10px 13px; border: 1.5px solid var(--okraj); border-radius: 10px;
+  font-family: 'DM Sans', sans-serif; font-size: .88rem; color: var(--text);
+  background: var(--pozadi); transition: var(--prechod);
+}
+.pole input:focus { outline: none; border-color: var(--zelena); background: #fff; box-shadow: 0 0 0 3px rgba(0,175,63,.1); }
+
+/* ═══════════════════════════════════════════════
+   TLAČÍTKA AKCÍ
+   ═══════════════════════════════════════════════ */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 20px; border-radius: 11px; border: none;
+  font-family: 'DM Sans', sans-serif; font-size: .9rem; font-weight: 600;
+  cursor: pointer; transition: var(--prechod);
+}
+.btn-hlavni {
+  background: linear-gradient(135deg, var(--zelena), var(--modra));
+  color: #fff; box-shadow: 0 4px 18px rgba(0,0,153,.2);
+}
+.btn-hlavni:hover:not(:disabled) { opacity: .9; transform: translateY(-1px); }
+.btn-hlavni:disabled { background: var(--okraj); color: var(--seda); cursor: not-allowed; box-shadow: none; }
+.btn-nebezpeci { background: rgba(231,76,60,.1); color: #e74c3c; }
+.btn-nebezpeci:hover:not(:disabled) { background: rgba(231,76,60,.2); }
+.btn-nebezpeci:disabled { opacity: .4; cursor: not-allowed; }
+.radek-tlacitek { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+
+/* ═══════════════════════════════════════════════
+   PROGRESS BAR — animovaný proužek při zpracování
+   ═══════════════════════════════════════════════ */
+.progres { height: 5px; border-radius: 3px; background: var(--pozadi); overflow: hidden; margin-top: 12px; display: none; }
+.progres-fill { height: 100%; background: linear-gradient(90deg, var(--zelena), var(--modra)); width: 0; transition: width .3s ease; border-radius: 3px; }
+
+/* ═══════════════════════════════════════════════
+   STAVOVÉ ZPRÁVY — informace, chyba, úspěch
+   ═══════════════════════════════════════════════ */
+.stav { margin-top: 10px; }
+.sm { padding: 10px 14px; border-radius: 9px; font-size: .84rem; font-weight: 500; display: flex; align-items: center; gap: 8px; animation: nahoruVjezd .3s both; }
+.sm-ok  { background: rgba(0,175,63,.09);  color: #005c1f; border: 1px solid rgba(0,175,63,.2); }
+.sm-err { background: rgba(231,76,60,.09); color: #b71c1c; border: 1px solid rgba(231,76,60,.18); }
+.sm-inf { background: rgba(0,0,153,.07);   color: #000060; border: 1px solid rgba(0,0,153,.15); }
+
+/* ═══════════════════════════════════════════════
+   INFO LIŠTA — doplňkové instrukce pod tlačítky
+   ═══════════════════════════════════════════════ */
+.info-lista {
+  background: rgba(0,0,153,.05); border: 1px solid rgba(0,0,153,.13);
+  border-radius: 9px; padding: 9px 13px; font-size: .8rem; color: #00006a;
+  margin-top: 14px; display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap;
+}
+
+/* ═══════════════════════════════════════════════
+   PDF ČTENÁŘ — zobrazovač PDF dokumentů
+   Výška se přizpůsobí výšce okna, zbytek prostoru zabere iframe
+   ═══════════════════════════════════════════════ */
+.ctenarov-wrap {
+  width: 100%;
+  /* Výška = celá výška okna minus výška navigace a horního paddingu */
+  height: calc(100vh - 130px);
+  min-height: 400px;
+  border: 1.5px solid var(--okraj); border-radius: 12px;
+  overflow: hidden; margin-top: 10px; background: #16161e;
+  display: flex; align-items: center; justify-content: center;
+}
+/* Zástupný text před nahráním souboru */
+.ctenarov-placeholder { text-align: center; color: rgba(255,255,255,.3); padding: 40px; }
+.ctenarov-placeholder .ikona { font-size: 2.8rem; margin-bottom: 10px; }
+/* iframe pro zobrazení PDF — zabírá celý wrap */
+#pdf-iframe { width: 100%; height: 100%; border: none; }
+
+/* ═══════════════════════════════════════════════
+   PRACOVNÍ PLOCHY — každá záložka má svou
+   Skryju všechny, zobrazím jen aktivní
+   ═══════════════════════════════════════════════ */
+.pracovni-plocha { display: none; }
+.pracovni-plocha.aktivni { display: block; }
+
+/* ═══════════════════════════════════════════════
+   NAČÍTACÍ ANIMACE — zobrazuji během generování náhledů
+   ═══════════════════════════════════════════════ */
+.nacitam {
+  text-align: center; padding: 28px; color: var(--seda);
+  font-size: .86rem; display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.kolecko { /* Rotující kolečko */
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 2.5px solid var(--okraj); border-top-color: var(--zelena);
+  animation: tocSe .7s linear infinite;
+}
+
+/* ═══════════════════════════════════════════════
+   PATIČKA
+   ═══════════════════════════════════════════════ */
+.paticka {
+  text-align: center; margin-top: 40px; padding-top: 16px;
+ /* border-top: 1px solid var(--okraj);*/ color: var(--seda); font-size: .76rem;
+}
+.paticka b {
+  background: linear-gradient(90deg, var(--zelena), var(--modra));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+/* ═══════════════════════════════════════════════
+   ANIMACE KLÍČOVÉ SNÍMKY
+   ═══════════════════════════════════════════════ */
+@keyframes nahoruVjezd { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
+@keyframes tocSe       { to   { transform:rotate(360deg); } }
+
+/* ═══════════════════════════════════════════════
+   RESPONZIVITA — pro mobily a tablety
+   ═══════════════════════════════════════════════ */
+@media (max-width: 600px) {
+  .app { padding: 14px 12px 50px; }
+  .navigace { flex-direction: column; }
+  .nav-tlacitko { justify-content: flex-start; }
+  .ovladaci-radek, .radek-tlacitek { flex-direction: column; }
+  .mrizka-nahledu { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+  .ctenarov-wrap { height: calc(100vh - 100px); }
+}
+
+/* ═══════════════════════════════════════════════
+   ZÁLOŽKA UPRAVIT — sekce nástrojů
+   ═══════════════════════════════════════════════ */
+.uprava-sekce {
+  background: var(--bila);
+  border: 1.5px solid var(--okraj);
+  border-radius: var(--polomer);
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  transition: box-shadow var(--prechod);
+}
+.uprava-sekce:hover {
+  box-shadow: 0 4px 18px rgba(0,0,40,.08);
+}
+.uprava-sekce-nadpis {
+  font-size: .92rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.uprava-poznamka {
+  font-size: .78rem;
+  color: var(--seda);
+  margin-bottom: 10px;
+  padding: 7px 10px;
+  background: var(--pozadi);
+  border-radius: 8px;
+  border-left: 3px solid var(--okraj);
+}
+.uprava-select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1.5px solid var(--okraj);
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: .84rem;
+  color: var(--text);
+  background: var(--bila);
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--prechod);
+}
+.uprava-select:focus { border-color: var(--zelena); }
+
+/* ── Záložka Upravit — hlavička sekce s tlačítkem Vybrat ── */
+.uprava-sekce-hlavicka {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.uprava-sekce-nadpis { margin-bottom: 0; }
+
+/* Tlačítko Vybrat — výchozí a vybrané stavy */
+.btn-vybrat {
+  padding: 5px 14px;
+  border: 1.5px solid var(--okraj);
+  border-radius: 50px;
+  background: var(--bila);
+  color: var(--seda);
+  font-family: 'DM Sans', sans-serif;
+  font-size: .78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--prechod);
+  white-space: nowrap;
+}
+.btn-vybrat:hover {
+  border-color: var(--zelena);
+  color: var(--zelena);
+}
+/* Vybraný stav — zelené pozadí */
+.btn-vybrat.vybrano {
+  background: var(--zelena);
+  border-color: var(--zelena);
+  color: #fff;
+}
+.btn-vybrat.vybrano::before { content: '✓ '; }
+
+/* Sekce ve vybraném stavu — jemný zelený okraj */
+.uprava-sekce.vybrana {
+  border-color: var(--zelena);
+  background: rgba(0,175,63,.03);
+}
+
+/* Řada hromadných tlačítek */
+.uprava-hromadna-rada {
+  display: flex;
+  gap: 10px;
+  margin: 18px 0 14px;
+  flex-wrap: wrap;
+}
+.uprava-hromadna-rada .btn {
+  flex: 1;
+  min-width: 200px;
+}
+</style>
 </head>
 <body>
-    <div class="main-wrapper" >
-        <div class="container" id="main-container">
-        <div class="header" id="main-header">
-            <h1><span class="emoji">📄</span>ePDFka</h1>
-            <p class="subtitle" >Profesionální správa PDF dokumentů</p>
-        </div>
 
+<!-- ═══════════════════════════════════════════════
+     CANVAS POZADÍ — hexagonová mřížka z hexagon-hover.html
+     JavaScript v sekci HEX CANVAS na konci souboru
+     řídí vykreslování, velikost a hover animaci.
+     ═══════════════════════════════════════════════ -->
+<canvas id="hex-canvas" aria-hidden="true"></canvas>
 
-        
-        <div class="function-grid" id="main-function-grid">            
-            <!-- Funce čtenář -->
-            <div class="function-card" id="function-card" onclick="selectFunction('displayPDF')">
-                <div class="function-title">👁️‍🗨️ Čtenář</div>
-                <div class="function-description"> <br> Čtenářský koutek na čtení a úpravu PDF</div>
-            </div>
+<!-- ═══════════════════════════════════════════════
+     BEZPEČNOSTNÍ MODAL
+     Kliknu na zelený odznak → otevře se toto okno
+     Vysvětluje proč jsou data v bezpečí na mém PC
+     ═══════════════════════════════════════════════ -->
+<div class="modal-vrstva" id="modal-bezp"
+     onclick="if(event.target===this)this.classList.remove('zobraz')">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-nadpis">
+    <h2 id="modal-nadpis">🔒 Bezpečnost &amp; soukromí</h2>
+    <ul class="modal-seznam">
+      <li><span class="ico">🖥️</span><div><strong>Vše probíhá jen na mém PC.</strong> Žádný PDF soubor není nikdy odeslán na žádný server. Aplikace nemá backend.</div></li>
+      <li><span class="ico">🔌</span><div><strong>Knihovny se stáhnou 1× z CDN</strong> při prvním načtení. Jsou to pouze JS soubory — moje PDF se nestahují.</div></li>
+      <li><span class="ico">📦</span><div><strong>pdf-lib</strong> zpracovává veškeré PDF operace čistě v JS přímo v paměti prohlížeče.</div></li>
+      <li><span class="ico">🧠</span><div><strong>pdf.js</strong> renderuje náhledy stránek pomocí Canvas API — pouze lokálně.</div></li>
+      <li><span class="ico">💾</span><div>Ukládání probíhá přes <code>URL.createObjectURL</code> — soubor existuje jen v RAM a uloží se přímo na disk.</div></li>
+      <li><span class="ico">🔍</span><div>Ověřit lze v DevTools → Network: po nahrání PDF neuvidím žádné POST/PUT requesty s daty.</div></li>
+    </ul>
+    <button class="modal-zavreni"
+            onclick="document.getElementById('modal-bezp').classList.remove('zobraz')">
+      Rozumím ✓
+    </button>
+  </div>
+</div>
 
+<!-- ═══════════════════════════════════════════════
+     HLAVNÍ OBSAH APLIKACE
+     ═══════════════════════════════════════════════ -->
+<div class="app">
 
-
-
-            <div class="function-card" id="function-card" onclick="selectFunction('merge')">
-                <div class="function-title">🔗 Spojit / Řadit / Otáčet</div>
-                <div class="function-description">Spojování více PDF souborů, změna pořadí stránek a otáčení</div>
-            </div>
-            
-            <div class="function-card" id="function-card" onclick="selectFunction('split')">
-                <div class="function-title">✂️ Rozdělit PDF</div>
-                <div class="function-description">Rozdělení jednoho PDF na více souborů podle rozsahů</div>
-            </div>
-        </div>
-
-        <button class="back-button" id="back-button" onclick="goBackToMain()">← Zpět na hlavní výběr</button>
-
-         <!--<button class="poznamka-button" id="poznamka-button" onclick="makePoznamka()">Vlož poznámku do PDF</button> -->    
-
-
-        
-        
-
-        <!-- Zobrazení funkce čtenář -->      
-       <div id="displayPDF-workspace" class="workspace">                
-                <div class="upload-area" id="displayPDF-upload-area" ondrop="handleFileDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
-                    <p>Přetáhněte PDF soubor sem nebo</p>
-                    <button class="upload-button" onclick="selectFiles('displayPDF')">Vybrat soubor</button>
-                    <input type="file" id="displayPDF-files" accept=".pdf" style="display: none;" onchange="handleFileSelect(event, 'displayPDF')">
-                </div>
-                
-                <div id="displayPDF-file-list" class="file-list"></div>
-                <div id="pdf-container">
-                    <p style="text-align: center; padding: 40px; color: #666;">Zde se zobrazí váš PDF dokument po nahrání</p>
-                </div>
-            </div>
-
-
-              
-        
-        <div id="merge-workspace" class="workspace">
-            <h3>Spojit / Řadit / Otáčet PDF</h3>
-            <div class="upload-area" ondrop="handleFileDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
-                <p>Přetáhněte PDF soubory sem nebo</p>
-                <button class="upload-button" onclick="selectFiles('merge')">Vybrat soubory</button>
-                <input type="file" id="merge-files" multiple accept=".pdf" style="display: none;" onchange="handleFileSelect(event, 'merge')">
-            </div>
-            
-            <div id="merge-file-list" class="file-list"></div>
-            
-            <div class="preview-area" id="merge-preview"></div>
-            
-            <div class="controls">
-                <div class="control-group">
-                    <label class="control-label">Název výstupního souboru:</label>
-                    <input type="text" class="control-input" id="merge-output-name" placeholder="spojeny-dokument.pdf">
-                </div>
-            
-                       
-            </div>
-
-           <div class="Stažene soubory">
-                ℹ️ Změněné PDFka najdeš v 📁 Stažené soubory
-                </div>
-            
-            <div class="progress-bar" id="merge-progress" style="display: none;">
-                <div class="progress-fill"></div>
-            </div>
-            
-            <div class="controls-footer">
-                <button class="action-button" onclick="processMerge()" id="merge-button" disabled>
-                Spojit a uložit PDF
-                </button>
-                <button class="action-button remove-all-button" style="background: #e74c3c; margin: 10px 5px;" onclick="removeAllFiles('merge')" id="remove-all-merge-button" disabled>
-                    Odstranit vše
-                </button>
-            </div>
-
-            <div id="merge-status"></div>
-        </div>
-
-        <div id="split-workspace" class="workspace">
-            <h3>Rozdělit PDF</h3>
-            <div class="upload-area" ondrop="handleFileDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
-                <p>Přetáhněte PDF soubor sem nebo</p>
-                <button class="upload-button" onclick="selectFiles('split')">Vybrat soubor</button>
-                <input type="file" id="split-files" accept=".pdf" style="display: none;" onchange="handleFileSelect(event, 'split')">
-            </div>
-            
-            <div id="split-file-list" class="file-list"></div>
-
-            <div class="preview-area" id="split-preview"></div>
-            
-            <div class="controls">
-                <div class="control-group">
-                    <label class="control-label">Rozsahy stránek (např. 1-3,5,7-9):</label>
-                    <input type="text" class="control-input" id="split-ranges" placeholder="1-3,5,7-9">
-                </div>
-                
-            </div>
-            
-            <div class="Stažene soubory2">
-                ℹ️ Rozdělené PDFka najdeš v 📁 Stažené soubory 
-                <div>***
-                </div><strong>!!! Nezapomeň povolit "Stáhnout více souborů" !!!</strong>
-                </div> 
-
-            <div class="progress-bar" id="split-progress" style="display: none;">
-                <div class="progress-fill"></div>
-            </div>
-            
-            <button class="action-button" onclick="processSplit()" id="split-button" disabled>
-                Rozdělit PDF
-            </button>
-            
-            <div id="split-status"></div>
-        </div>
-
-        <div class="footer">
-            © 2025 ePDFka • Všechna práva vyhrazena • mmlass • verze 1.08 • říjen 2025
-        </div>
-        </div>
+  <!-- HLAVIČKA — viditelná jen v záložkách Spojit a Rozdělit
+       V záložce Čtenář ji schovávám JS kódem pro max. prostor -->
+  <header class="hlavicka" id="hlavicka">
+    <div class="logo-pilulka">
+      <div class="hex-logo"><span>📄</span></div>
+      <span>ePDFka</span>
     </div>
-    
-    
-    <script>
-        let currentFunction = '';
-        let uploadedFiles = {
-            merge: [],
-            split: [],
-            displayPDF: [] // Přidána položka pro displayPDF
-        };
-        let dragSrcEl = null;
+    <h1>Profesionální správa <em>PDF dokumentů</em></h1>
+    <p>Čtení &nbsp;·&nbsp; Spojování &nbsp;·&nbsp; Rozdělování &nbsp;·&nbsp; Otáčení — vše lokálně v prohlížeči</p>
+    <button class="bezp-odznak"
+            onclick="document.getElementById('modal-bezp').classList.add('zobraz')">
+      <span class="bezp-tecka"></span>
+      🔒 100% lokální zpracování &nbsp;·&nbsp; Žádná data neopustí váš PC
+    </button>
+  </header>
 
-        // Ujistěte se, že je PDF.js správně nastaveno
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
+  <!-- NAVIGACE — záložky pro výběr nástroje -->
+  <nav class="navigace" role="tablist">
+    <button class="nav-tlacitko" id="tab-ctenar"
+            onclick="prepniZalozku('ctenar')" role="tab" aria-selected="false">
+      <div class="nav-hex">👁️</div> Čtenář
+    </button>
+    <button class="nav-tlacitko aktivni" id="tab-spojit"
+            onclick="prepniZalozku('spojit')" role="tab" aria-selected="true">
+      <div class="nav-hex">🔗</div> Spojit / Řadit
+    </button>
+    <button class="nav-tlacitko" id="tab-rozdelit"
+            onclick="prepniZalozku('rozdelit')" role="tab" aria-selected="false">
+      <div class="nav-hex">✂️</div> Rozdělit
+    </button>
+    <button class="nav-tlacitko" id="tab-uprava"
+            onclick="prepniZalozku('uprava')" role="tab" aria-selected="false">
+      <div class="nav-hex">🛠️</div> Upravit
+    </button>
+  </nav>
+
+  <!-- ════════════════════════════
+       ZÁLOŽKA: ČTENÁŘ PDF
+       Hlavička se skryje → max. prostor pro prohlížení
+       ════════════════════════════ -->
+  <div class="pracovni-plocha" id="ws-ctenar" role="tabpanel">
+    <div class="karta">
+
+      <!-- Kompaktní drop zóna — menší padding aby nebrala místo -->
+      <div class="zona-drop" id="zona-ctenar"
+           onclick="document.getElementById('vstup-ctenar').click()"
+           ondrop="onDrop(event,'ctenar')"
+           ondragover="onOver(event)"
+           ondragleave="onLeave(event)">
+        <div class="dz-ikona">📂</div>
+        <div class="dz-text"><strong>Přetáhněte PDF sem</strong> nebo klikněte pro výběr</div>
+        <button class="btn-vyber" type="button">📄 Vybrat soubor</button>
+        <input type="file" id="vstup-ctenar" accept=".pdf" style="display:none"
+               onchange="onInput(event,'ctenar')">
+      </div>
+
+      <!-- Seznam nahraného souboru (max. 1 soubor u čtenáře) -->
+      <div class="seznam-souboru" id="seznam-ctenar"></div>
+
+      <!-- Samotný prohlížeč PDF — zabírá zbytek výšky okna -->
+      <div class="ctenarov-wrap" id="ctenar-wrap">
+        <div class="ctenarov-placeholder">
+          <div class="ikona">📄</div>
+          <div>Sem se zobrazí váš PDF dokument</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ════════════════════════════
+       ZÁLOŽKA: SPOJIT / ŘADIT / OTÁČET
+       ════════════════════════════ -->
+  <div class="pracovni-plocha aktivni" id="ws-spojit" role="tabpanel">
+    <div class="karta">
+      <div class="karta-nadpis">
+        <div class="hex-odznak">🔗</div> Spojit / Řadit / Otáčet
+      </div>
+
+      <div class="zona-drop" id="zona-spojit"
+           onclick="document.getElementById('vstup-spojit').click()"
+           ondrop="onDrop(event,'spojit')"
+           ondragover="onOver(event)"
+           ondragleave="onLeave(event)">
+        <div class="dz-ikona">📎</div>
+        <div class="dz-text"><strong>Přetáhněte PDF soubory sem</strong> nebo klikněte pro výběr</div>
+        <button class="btn-vyber" type="button">📎 Vybrat soubory</button>
+        <input type="file" id="vstup-spojit" accept=".pdf" multiple style="display:none"
+               onchange="onInput(event,'spojit')">
+      </div>
+
+      <div class="seznam-souboru" id="seznam-spojit"></div>
+      <div class="mrizka-nahledu" id="nahled-spojit"></div>
+
+      <div class="ovladaci-radek">
+        <div class="pole">
+          <label for="jmeno-vystupu">Název výstupního souboru</label>
+          <input type="text" id="jmeno-vystupu" placeholder="spojeny-dokument.pdf">
+        </div>
+      </div>
+
+      <div class="radek-tlacitek">
+        <button class="btn btn-hlavni" id="btn-spoj" onclick="provedSpojeni()" disabled>
+          💾 Spojit a uložit PDF
+        </button>
+        <button class="btn btn-nebezpeci" id="btn-spoj-smazat"
+                onclick="smazVse('spojit')" disabled>
+          🗑️ Odstranit vše
+        </button>
+      </div>
+
+      <div class="progres" id="progres-spojit">
+        <div class="progres-fill" id="fill-spojit"></div>
+      </div>
+      <div class="stav" id="stav-spojit"></div>
+      <div class="info-lista">
+        ℹ️ Stránky lze <strong>přetahovat myší</strong>, posouvat <strong>◀ ▶</strong>
+        nebo zadat číslo pozice do pole a potvrdit Enterem.
+        Výsledek najdu v <strong>📁 Stažené soubory</strong>.
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════
+       ZÁLOŽKA: ROZDĚLIT PDF
+       ════════════════════════════ -->
+  <div class="pracovni-plocha" id="ws-rozdelit" role="tabpanel">
+    <div class="karta">
+      <div class="karta-nadpis">
+        <div class="hex-odznak">✂</div> Rozdělit PDF
+      </div>
+
+      <div class="zona-drop" id="zona-rozdelit"
+           onclick="document.getElementById('vstup-rozdelit').click()"
+           ondrop="onDrop(event,'rozdelit')"
+           ondragover="onOver(event)"
+           ondragleave="onLeave(event)">
+        <div class="dz-ikona">📄</div>
+        <div class="dz-text"><strong>Přetáhněte PDF sem</strong> nebo klikněte pro výběr</div>
+        <button class="btn-vyber" type="button">📄 Vybrat soubor</button>
+        <input type="file" id="vstup-rozdelit" accept=".pdf" style="display:none"
+               onchange="onInput(event,'rozdelit')">
+      </div>
+
+      <div class="seznam-souboru" id="seznam-rozdelit"></div>
+      <div class="mrizka-nahledu" id="nahled-rozdelit"></div>
+
+      <div class="ovladaci-radek">
+        <div class="pole">
+          <label for="rozsahy-stranek">Rozsahy stránek (např. 1-3, 5, 7-9)</label>
+          <input type="text" id="rozsahy-stranek" placeholder="1-3, 5, 7-9">
+        </div>
+      </div>
+
+      <div class="radek-tlacitek">
+        <button class="btn btn-hlavni" id="btn-rozd" onclick="provedRozdeleni()" disabled>
+          ✂️ Rozdělit PDF
+        </button>
+        <button class="btn btn-nebezpeci" id="btn-rozd-smazat"
+                onclick="smazVse('rozdelit')" disabled>
+          🗑️ Odebrat soubor
+        </button>
+      </div>
+
+      <div class="progres" id="progres-rozdelit">
+        <div class="progres-fill" id="fill-rozdelit"></div>
+      </div>
+      <div class="stav" id="stav-rozdelit"></div>
+      <div class="info-lista">
+        ℹ️ Výsledky najdu v <strong>📁 Stažené soubory</strong> &nbsp;·&nbsp;
+        <strong>⚠️ Povol „Stáhnout více souborů" v prohlížeči!</strong>
+      </div>
+    </div>
+  </div>
 
 
-        // Helper function for downloading files
-        function downloadFile(data, filename, mimeType = 'application/pdf') {
-            const blob = new Blob([data], { type: mimeType });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+  <!-- ════════════════════════════
+       ZÁLOŽKA: UPRAVIT PDF
+       ════════════════════════════ -->
+  <div class="pracovni-plocha" id="ws-uprava" role="tabpanel">
+    <div class="karta">
+      <div class="karta-nadpis">
+        <div class="hex-odznak">🛠</div> Upravit PDF
+      </div>
+
+      <!-- DROP ZÓNA -->
+      <div class="zona-drop" id="zona-uprava"
+           onclick="document.getElementById('vstup-uprava').click()"
+           ondrop="onDrop(event,'uprava')"
+           ondragover="onOver(event)"
+           ondragleave="onLeave(event)">
+        <div class="dz-ikona">📄</div>
+        <div class="dz-text"><strong>Přetáhněte PDF sem</strong> nebo klikněte pro výběr</div>
+        <button class="btn-vyber" type="button">📄 Vybrat soubor</button>
+        <input type="file" id="vstup-uprava" accept=".pdf" style="display:none"
+               onchange="onInput(event,'uprava')">
+      </div>
+      <div class="seznam-souboru" id="seznam-uprava"></div>
+
+      <!-- ── NÁSTROJE ── -->
+      <div id="nastroje-uprava" style="display:none">
+
+        <!-- ① Změna formátu stránky -->
+        <div class="uprava-sekce" id="sekce-format">
+          <div class="uprava-sekce-hlavicka">
+            <div class="uprava-sekce-nadpis">📐 Změna formátu stránky</div>
+            <button class="btn-vybrat" id="vyber-format" onclick="prepniVyber('format')">Vybrat</button>
+          </div>
+          <div class="ovladaci-radek">
+            <div class="pole">
+              <label>Stránky (prázdné = všechny)</label>
+              <input type="text" id="upr-format-stranky" placeholder="1-3, 5 nebo prázdné = vše">
+            </div>
+            <div class="pole">
+              <label>Cílový formát</label>
+              <select id="upr-format-cilovy" class="uprava-select">
+                <option value="A3">A3 (297 × 420 mm)</option>
+                <option value="A4" selected>A4 (210 × 297 mm)</option>
+                <option value="A5">A5 (148 × 210 mm)</option>
+                <option value="Letter">Letter (216 × 279 mm)</option>
+                <option value="Legal">Legal (216 × 356 mm)</option>
+              </select>
+            </div>
+            <div class="pole">
+              <label>Orientace</label>
+              <select id="upr-format-orient" class="uprava-select">
+                <option value="portrait">Na výšku (Portrait)</option>
+                <option value="landscape">Na šířku (Landscape)</option>
+              </select>
+            </div>
+            <div class="pole">
+              <label>Škálovat obsah</label>
+              <select id="upr-format-skalovat" class="uprava-select">
+                <option value="1">Ano — přizpůsobit obsah novému formátu</option>
+                <option value="0">Ne — zachovat původní velikost obsahu</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-hlavni btn-uprava-akce" disabled onclick="upravFormatStranky(true)">📐 Změnit formát a stáhnout</button>
+        </div>
+
+        <!-- ② Číslování stránek -->
+        <div class="uprava-sekce" id="sekce-cislo">
+          <div class="uprava-sekce-hlavicka">
+            <div class="uprava-sekce-nadpis">🔢 Číslování stránek</div>
+            <button class="btn-vybrat" id="vyber-cislo" onclick="prepniVyber('cislo')">Vybrat</button>
+          </div>
+          <div class="ovladaci-radek">
+            <div class="pole">
+              <label>Pozice čísla</label>
+              <select id="upr-cislo-pozice" class="uprava-select">
+                <option value="bottom-center">Dole uprostřed</option>
+                <option value="bottom-right">Dole vpravo</option>
+                <option value="bottom-left">Dole vlevo</option>
+                <option value="top-center">Nahoře uprostřed</option>
+                <option value="top-right">Nahoře vpravo</option>
+              </select>
+            </div>
+            <div class="pole">
+              <label>Počáteční číslo</label>
+              <input type="number" id="upr-cislo-zacatek" value="1" min="1" style="width:90px">
+            </div>
+            <div class="pole">
+              <label>Formát</label>
+              <select id="upr-cislo-format" class="uprava-select">
+                <option value="n">1, 2, 3…</option>
+                <option value="strana_n">Strana 1, Strana 2…</option>
+                <option value="n_z_c">1 / 5, 2 / 5…</option>
+              </select>
+            </div>
+            <div class="pole">
+              <label>Velikost písma (pt)</label>
+              <input type="number" id="upr-cislo-font" value="11" min="6" max="36" style="width:80px">
+            </div>
+          </div>
+          <button class="btn btn-hlavni btn-uprava-akce" disabled onclick="pridejCislovani(true)">🔢 Přidat číslování a stáhnout</button>
+        </div>
+
+        <!-- ③ Vodoznak -->
+        <div class="uprava-sekce" id="sekce-voda">
+          <div class="uprava-sekce-hlavicka">
+            <div class="uprava-sekce-nadpis">💧 Vodoznak</div>
+            <button class="btn-vybrat" id="vyber-voda" onclick="prepniVyber('voda')">Vybrat</button>
+          </div>
+          <div class="ovladaci-radek">
+            <div class="pole">
+              <label>Text vodoznaku</label>
+              <input type="text" id="upr-voda-text" placeholder="DŮVĚRNÉ" value="DŮVĚRNÉ">
+            </div>
+            <div class="pole">
+              <label>Průhlednost (%)</label>
+              <input type="number" id="upr-voda-opacity" value="15" min="1" max="80" style="width:80px">
+            </div>
+            <div class="pole">
+              <label>Velikost písma (pt)</label>
+              <input type="number" id="upr-voda-font" value="72" min="20" max="200" style="width:80px">
+            </div>
+            <div class="pole">
+              <label>Barva</label>
+              <select id="upr-voda-barva" class="uprava-select">
+                <option value="gray">Šedá</option>
+                <option value="red">Červená</option>
+                <option value="blue">Modrá</option>
+                <option value="green">Zelená</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-hlavni btn-uprava-akce" disabled onclick="pridejVodoznak(true)">💧 Přidat vodoznak a stáhnout</button>
+        </div>
+
+        <!-- ④ Ořez (CropBox) -->
+        <div class="uprava-sekce" id="sekce-orez">
+          <div class="uprava-sekce-hlavicka">
+            <div class="uprava-sekce-nadpis">✂️ Ořez okrajů (CropBox)</div>
+            <button class="btn-vybrat" id="vyber-orez" onclick="prepniVyber('orez')">Vybrat</button>
+          </div>
+          <div class="uprava-poznamka">Zadej ořez v mm od každého okraje. CropBox skryje okraje, ale fyzicky je neodstraní.</div>
+          <div class="ovladaci-radek">
+            <div class="pole"><label>Nahoře (mm)</label><input type="number" id="upr-orez-top" value="0" min="0" max="100" style="width:80px"></div>
+            <div class="pole"><label>Vpravo (mm)</label><input type="number" id="upr-orez-right" value="0" min="0" max="100" style="width:80px"></div>
+            <div class="pole"><label>Dole (mm)</label><input type="number" id="upr-orez-bottom" value="0" min="0" max="100" style="width:80px"></div>
+            <div class="pole"><label>Vlevo (mm)</label><input type="number" id="upr-orez-left" value="0" min="0" max="100" style="width:80px"></div>
+          </div>
+          <button class="btn btn-hlavni btn-uprava-akce" disabled onclick="provedOrez(true)">✂️ Oříznout a stáhnout</button>
+        </div>
+
+        <!-- ⑤ Přidání okrajů -->
+        <div class="uprava-sekce" id="sekce-okraje">
+          <div class="uprava-sekce-hlavicka">
+            <div class="uprava-sekce-nadpis">📏 Přidání okrajů (Padding)</div>
+            <button class="btn-vybrat" id="vyber-okraje" onclick="prepniVyber('okraje')">Vybrat</button>
+          </div>
+          <div class="uprava-poznamka">Zvětší stránku o zadané okraje a posune obsah. Obsah se neškáluje.</div>
+          <div class="ovladaci-radek">
+            <div class="pole"><label>Nahoře (mm)</label><input type="number" id="upr-pad-top" value="10" min="0" max="100" style="width:80px"></div>
+            <div class="pole"><label>Vpravo (mm)</label><input type="number" id="upr-pad-right" value="10" min="0" max="100" style="width:80px"></div>
+            <div class="pole"><label>Dole (mm)</label><input type="number" id="upr-pad-bottom" value="10" min="0" max="100" style="width:80px"></div>
+            <div class="pole"><label>Vlevo (mm)</label><input type="number" id="upr-pad-left" value="10" min="0" max="100" style="width:80px"></div>
+          </div>
+          <button class="btn btn-hlavni btn-uprava-akce" disabled onclick="pridejOkraje(true)">📏 Přidat okraje a stáhnout</button>
+        </div>
+
+        <!-- ⑦ Smazání metadat -->
+        <div class="uprava-sekce" id="sekce-smazMeta">
+          <div class="uprava-sekce-hlavicka">
+            <div class="uprava-sekce-nadpis">🧹 Smazání metadat</div>
+            <button class="btn-vybrat" id="vyber-smazMeta" onclick="prepniVyber('smazMeta')">Vybrat</button>
+          </div>
+          <div class="uprava-poznamka">Odstraní: Název, Autor, Předmět, Klíčová slova, Tvůrce, Producent a XMP metadata. Obsah stránek zůstane nedotčen.</div>
+          <button class="btn btn-hlavni btn-uprava-akce" disabled onclick="smazMetadata(true)">🧹 Smazat metadata a stáhnout</button>
+        </div>
+
+        <!-- ⑧ Nastavení metadat -->
+        <div class="uprava-sekce" id="sekce-meta">
+          <div class="uprava-sekce-hlavicka">
+            <div class="uprava-sekce-nadpis">📝 Nastavení metadat</div>
+            <button class="btn-vybrat" id="vyber-meta" onclick="prepniVyber('meta')">Vybrat</button>
+          </div>
+          <div class="ovladaci-radek">
+            <div class="pole"><label>Název dokumentu</label><input type="text" id="upr-meta-nazev" placeholder="Název"></div>
+            <div class="pole"><label>Autor</label><input type="text" id="upr-meta-autor" placeholder="Jméno autora"></div>
+            <div class="pole"><label>Předmět</label><input type="text" id="upr-meta-predmet" placeholder="Předmět/popis"></div>
+            <div class="pole"><label>Klíčová slova</label><input type="text" id="upr-meta-klicovaSlova" placeholder="slovo1, slovo2"></div>
+          </div>
+          <button class="btn btn-hlavni btn-uprava-akce" disabled onclick="nastavMetadata(true)">📝 Uložit metadata a stáhnout</button>
+        </div>
+
+        <!-- ⑨ Zmenšení souboru -->
+        <div class="uprava-sekce" id="sekce-zmen">
+          <div class="uprava-sekce-hlavicka">
+            <div class="uprava-sekce-nadpis">📦 Zmenšení souboru (resamplování)</div>
+            <button class="btn-vybrat" id="vyber-zmen" onclick="prepniVyber('zmen')">Vybrat</button>
+          </div>
+          <div class="uprava-poznamka">Převede každou stránku na Canvas → JPEG → zpět do PDF. Zmenší soubory s obrázky. Textová vrstva se ztratí.</div>
+          <div class="ovladaci-radek">
+            <div class="pole">
+              <label>Kvalita (nižší = menší soubor)</label>
+              <select id="upr-zmen-kvalita" class="uprava-select">
+                <option value="0.5">50% — maximální zmenšení</option>
+                <option value="0.65">65% — výrazné zmenšení</option>
+                <option value="0.8" selected>80% — vyvážené</option>
+                <option value="0.92">92% — jemné zmenšení</option>
+              </select>
+            </div>
+            <div class="pole">
+              <label>Měřítko stránky</label>
+              <select id="upr-zmen-meritko" class="uprava-select">
+                <option value="0.75">0.75× — výrazně menší</option>
+                <option value="1.0" selected>1.0× — původní velikost</option>
+                <option value="1.5">1.5× — větší / kvalitnější</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-hlavni btn-uprava-akce" disabled onclick="zmensVelikost(true)">📦 Zmenšit a stáhnout</button>
+        </div>
+
+        <!-- ── TLAČÍTKA HROMADNÉHO EXPORTU ── -->
+        <div class="uprava-hromadna-rada">
+          <button class="btn btn-hlavni btn-uprava-akce" id="btn-vsechny-vybrane" disabled
+                  onclick="provedVsechnyVybrane()">
+            ✅ Uložit vše vybrané do jednoho PDF
+          </button>
+          <button class="btn btn-nebezpeci btn-uprava-akce" id="btn-vymaz-vybrane" disabled
+                  onclick="vymazVsechnyVybrane()">
+            🗑 Vymazat vybrané úpravy
+          </button>
+        </div>
+
+        <!-- ⑥ Extrakce stránek jako PNG — stojí samostatně, mimo hromadný export -->
+        <div class="uprava-sekce" id="sekce-png" style="border-color: var(--zelena); border-width:2px;">
+          <div class="uprava-sekce-hlavicka">
+            <div class="uprava-sekce-nadpis">🖼️ Extrakce stránek jako PNG <small style="color:var(--seda);font-weight:400;font-size:.75rem">— samostatná funkce</small></div>
+          </div>
+          <div class="ovladaci-radek">
+            <div class="pole">
+              <label>Stránky (prázdné = všechny)</label>
+              <input type="text" id="upr-png-stranky" placeholder="1-3, 5 nebo prázdné = vše">
+            </div>
+            <div class="pole">
+              <label>Měřítko (vyšší = lepší kvalita)</label>
+              <select id="upr-png-meritko" class="uprava-select">
+                <option value="1">1× — rychlé, nižší kvalita</option>
+                <option value="2" selected>2× — doporučeno</option>
+                <option value="3">3× — vysoká kvalita, pomalejší</option>
+              </select>
+            </div>
+          </div>
+          <div class="uprava-poznamka">⚠️ Povol „Stáhnout více souborů" v prohlížeči — každá stránka = jeden PNG soubor. Tato funkce nepodporuje hromadný export.</div>
+          <button class="btn btn-hlavni btn-uprava-akce" disabled onclick="extrahujPNG()">🖼️ Exportovat jako PNG</button>
+        </div>
+
+        <!-- Jméno výstupního souboru -->
+        <div class="ovladaci-radek" style="margin-top:14px">
+          <div class="pole">
+            <label for="upr-jmeno-vystupu">Název výstupního souboru (pro hromadný export i jednotlivé úpravy)</label>
+            <input type="text" id="upr-jmeno-vystupu" placeholder="upraveny-dokument.pdf">
+          </div>
+        </div>
+
+        <div class="radek-tlacitek">
+          <button class="btn btn-nebezpeci" id="btn-upr-smazat" onclick="smazVse('uprava')" disabled>
+            🗑️ Odebrat soubor
+          </button>
+        </div>
+
+      </div><!-- /nastroje-uprava -->
+
+      <div class="progres" id="progres-uprava">
+        <div class="progres-fill" id="fill-uprava"></div>
+      </div>
+      <div class="stav" id="stav-uprava"></div>
+      <div class="info-lista">
+        ℹ️ Záložka „Upravit“ umožňuje lokálně v prohlížeči upravit jeden PDF soubor (např. změnit formát, očíslovat stránky, přidat vodoznak, oříznout či zmenšit soubor) a uložit výsledek buď jednotlivě, nebo jako řetězenou kombinaci více vybraných úprav do jednoho PDF. <br>
+        <br>
+        🔒 Vše probíhá jen ve vašem prohlížeči &nbsp;·&nbsp; Žádný soubor neopustí váš PC
+      </div>
+    </div>
+  </div>
+
+
+  <!-- PATIČKA -->
+  <footer class="paticka">
+    © 2026 <b>ePDFka</b> &nbsp;·&nbsp; mmlass &nbsp;·&nbsp; v 2.01 &nbsp;·&nbsp;
+    <button style="background:none;border:none;font-size:.76rem;color:var(--seda);cursor:pointer;padding:0;text-decoration:underline;font-family:'DM Sans',sans-serif;"
+      onclick="document.getElementById('modal-bezp').classList.add('zobraz')">
+      🔒 Bezpečnost
+    </button>
+  </footer>
+
+</div><!-- /app -->
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  BEZPEČNOSTNÍ AUDIT — shrnutí (platné pro celou aplikaci)
+//  ✅ Žádný POST/PUT s PDF daty — vše je in-memory
+//  ✅ pdf-lib: ArrayBuffer → ArrayBuffer, žádná síť
+//  ✅ pdf.js: renderuje do Canvas lokálně
+//  ✅ URL.createObjectURL: lokální blob URL, ne upload
+//  ✅ Stahování: <a download> na lokální blob URL
+//  ✅ Paměť: blob URL uvolněna po 60 s
+//  ℹ️  Knihovny z CDN se stáhnou jen jednou — nesou kód, ne data
+// ═══════════════════════════════════════════════════════════════
+
+// Nastavím worker pro pdf.js — čte PDF stránky v pozadí
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// Tady si ukládám všechny nahrané soubory — odděleno pro každou záložku
+const soubory = { ctenar: [], spojit: [], rozdelit: [], uprava: [] };
+
+// Odkaz na prvek, který se právě přetahuje (drag & drop)
+let zdrojDragu = null;
+
+// Timery pro animaci progress barů
+const casovace = {};
+
+// ═══════════════════════════════════════════════
+//  PŘEPÍNÁNÍ ZÁLOŽEK
+//  Schovu všechny pracovní plochy a zobrazím jen vybranou
+//  V záložce Čtenář navíc schuju hlavičku — chci max. prostor
+// ═══════════════════════════════════════════════
+function prepniZalozku(nazev) {
+  // Schuju všechny záložky a deaktivuju tlačítka
+  document.querySelectorAll('.pracovni-plocha').forEach(w => w.classList.remove('aktivni'));
+  document.querySelectorAll('.nav-tlacitko').forEach(b => {
+    b.classList.remove('aktivni');
+    b.setAttribute('aria-selected', 'false');
+  });
+
+  // Zobrazím jen vybranou záložku a označím tlačítko
+  document.getElementById('ws-' + nazev).classList.add('aktivni');
+  const btn = document.getElementById('tab-' + nazev);
+  btn.classList.add('aktivni');
+  btn.setAttribute('aria-selected', 'true');
+
+  // V záložce Čtenář skryju hlavičku — chci max. místo pro PDF
+  const hlavicka = document.getElementById('hlavicka');
+  if (nazev === 'ctenar') {
+    hlavicka.style.display = 'none';
+  } else {
+    hlavicka.style.display = '';
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  VSTUP SOUBORŮ — výběr přes dialog nebo drag & drop
+// ═══════════════════════════════════════════════
+function onInput(e, typ) {
+  // Vezmu jen PDF soubory, ostatní ignoruju
+  pridejSoubory([...e.target.files].filter(f => f.type === 'application/pdf'), typ);
+  e.target.value = ''; // Reset inputu aby šel nahrát stejný soubor znovu
+}
+
+function onDrop(e, typ) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('nad');
+  pridejSoubory([...e.dataTransfer.files].filter(f => f.type === 'application/pdf'), typ);
+}
+
+// Stav při přetahování nad drop zónou — zeleným rámečkem naznačím, že mohu pustit
+function onOver(e) { e.preventDefault(); e.currentTarget.classList.add('nad'); }
+function onLeave(e) { e.currentTarget.classList.remove('nad'); }
+
+// Přidám soubory do příslušné záložky
+async function pridejSoubory(noveSoubory, typ) {
+  if (!noveSoubory.length) return;
+  // Čtenář a Rozdělit mají vždy jen jeden soubor — nahradím starý
+  if (typ === 'rozdelit' || typ === 'ctenar') {
+    soubory[typ] = [noveSoubory[0]];
+  } else {
+    // Spojit může mít více souborů — přidám za stávající
+    soubory[typ] = [...soubory[typ], ...noveSoubory];
+  }
+  await vykresliSeznam(typ);
+  aktualizujTlacitka(typ);
+  // V čtenáři rovnou zobrazím PDF
+  if (typ === 'ctenar') zobrazPDF(noveSoubory[0]);
+  // V záložce Upravit — jeden soubor, zobrazím nástroje a předvyplním jméno
+  if (typ === 'uprava') soubory.uprava = [noveSoubory[0]];
+  if (typ === 'uprava') {
+    document.getElementById('nastroje-uprava').style.display = 'block';
+    const zaklad = noveSoubory[0].name.replace(/\.pdf$/i, '');
+    document.getElementById('upr-jmeno-vystupu').value = zaklad + '-upraveny.pdf';
+    // Povolím tlačítka
+    document.querySelectorAll('.btn-uprava-akce').forEach(b => b.disabled = false);
+    document.getElementById('btn-upr-smazat').disabled = false;
+  }
+}
+
+// Smažu vše v dané záložce
+function smazVse(typ) {
+  soubory[typ] = [];
+  vykresliSeznam(typ);
+  aktualizujTlacitka(typ);
+  if (typ === 'ctenar') {
+    // Vrátím placeholder text v čtenáři
+    document.getElementById('ctenar-wrap').innerHTML =
+      '<div class="ctenarov-placeholder"><div class="ikona">📄</div><div>Sem se zobrazí váš PDF dokument</div></div>';
+  }
+  if (typ !== 'ctenar') {
+    // Smažu náhledy stránek (pro záložky které mají mrizku)
+    const mrizka = document.getElementById('nahled-' + typ);
+    if (mrizka) mrizka.innerHTML = '';
+  }
+  if (typ === 'uprava') {
+    document.getElementById('nastroje-uprava').style.display = 'none';
+    // Resetuju stav výběrů
+    if (typeof vymazVsechnyVybrane === 'function') vymazVsechnyVybrane();
+  }
+}
+
+// Odeberu konkrétní soubor ze seznamu
+function odeberSoubor(typ, idx) {
+  soubory[typ].splice(idx, 1);
+  vykresliSeznam(typ);
+  aktualizujTlacitka(typ);
+  if (typ === 'ctenar' && !soubory.ctenar.length) smazVse('ctenar');
+  if (typ !== 'ctenar') document.getElementById('nahled-' + typ).innerHTML = '';
+}
+
+// Posunu soubor v seznamu nahoru nebo dolů (pro změnu pořadí ve Spojit)
+function posunSoubor(typ, idx, smer) {
+  const ni = idx + smer;
+  if (ni < 0 || ni >= soubory[typ].length) return;
+  const [polozka] = soubory[typ].splice(idx, 1);
+  soubory[typ].splice(ni, 0, polozka);
+  vykresliSeznam(typ);
+}
+
+// ═══════════════════════════════════════════════
+//  VYKRESLENÍ SEZNAMU SOUBORŮ
+//  Pro každý soubor vytvořím HTML položku s ikonami akcí
+// ═══════════════════════════════════════════════
+async function vykresliSeznam(typ) {
+  const el = document.getElementById('seznam-' + typ);
+  el.innerHTML = '';
+
+  for (let i = 0; i < soubory[typ].length; i++) {
+    const f = soubory[typ][i];
+
+    // Přečtu počet stránek pomocí pdf-lib — jde to lokálně z ArrayBuffer
+    let pocetStran = '—';
+    try {
+      const doc = await PDFLib.PDFDocument.load(await f.arrayBuffer());
+      pocetStran = doc.getPageCount() + ' str.';
+    } catch(_) {}
+
+    const polozka = document.createElement('div');
+    polozka.className = 'polozka-souboru';
+    polozka.dataset.idx = i;
+    if (typ === 'spojit') polozka.draggable = true; // jen Spojit podporuje přetahování souborů
+
+    polozka.innerHTML = `
+      <div class="soubor-hex">📄</div>
+      <div class="soubor-info">
+        <div class="soubor-nazev" title="${escapuj(f.name)}">${escapuj(f.name)}</div>
+        <div class="soubor-meta">${(f.size/1024/1024).toFixed(2)} MB &nbsp;·&nbsp; ${pocetStran}</div>
+      </div>
+      <div class="soubor-akce">
+        ${typ === 'spojit' ? `
+          <button class="ic-btn ic-posun" onclick="posunSoubor('spojit',${i},-1)"
+                  ${i === 0 ? 'disabled' : ''} title="Posunout nahoru">↑</button>
+          <button class="ic-btn ic-posun" onclick="posunSoubor('spojit',${i},1)"
+                  ${i === soubory.spojit.length-1 ? 'disabled' : ''} title="Posunout dolů">↓</button>
+        ` : ''}
+        <button class="ic-btn ic-smazat" onclick="odeberSoubor('${typ}',${i})"
+                title="Odebrat ze seznamu">✕</button>
+      </div>`;
+
+    el.appendChild(polozka);
+  }
+
+  // Pro Spojit nastavím drag & drop pro přeřazení souborů + vygeneruji náhledy stránek
+  if (typ === 'spojit') { nastavDnDSouboru(); await vygenerujNahledy('spojit'); }
+  if (typ === 'rozdelit') await vygenerujNahledy('rozdelit');
+}
+
+// ═══════════════════════════════════════════════
+//  DRAG & DROP PRO SEZNAM SOUBORŮ (záložka Spojit)
+//  Přetáhnu soubor v seznamu a změní se pořadí
+// ═══════════════════════════════════════════════
+function nastavDnDSouboru() {
+  document.querySelectorAll('#seznam-spojit .polozka-souboru').forEach(el => {
+    el.addEventListener('dragstart', e => {
+      zdrojDragu = el;
+      el.classList.add('tahana');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', el.dataset.idx);
+    });
+    el.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    });
+    el.addEventListener('drop', e => {
+      e.stopPropagation();
+      if (zdrojDragu && zdrojDrahu !== el) {
+        const odkud = parseInt(zdrojDragu.dataset.idx);
+        const kam   = parseInt(el.dataset.idx);
+        const [polozka] = soubory.spojit.splice(odkud, 1);
+        soubory.spojit.splice(kam, 0, polozka);
+        vykresliSeznam('spojit');
+      }
+    });
+    el.addEventListener('dragend', () => el.classList.remove('tahana'));
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  GENEROVÁNÍ NÁHLEDŮ STRÁNEK
+//  Projdu všechny soubory, pro každou stránku vytvořím miniaturu
+//  pomocí pdf.js (renderuje do Canvas)
+// ═══════════════════════════════════════════════
+async function vygenerujNahledy(typ) {
+  const mrizka = document.getElementById('nahled-' + typ);
+  if (!soubory[typ].length) { mrizka.innerHTML = ''; return; }
+
+  // Zobrazím točící se kolečko během načítání
+  mrizka.innerHTML = '<div class="nacitam"><div class="kolecko"></div> Načítám náhledy…</div>';
+
+  const fragment = document.createDocumentFragment();
+  let globalniCislo = 1; // číslo stránky ve výsledném spojeném dokumentu
+
+  try {
+    for (let fi = 0; fi < soubory[typ].length; fi++) {
+      const soubor = soubory[typ][fi];
+      const buffer = await soubor.arrayBuffer();
+
+      // Načtu PDF přes pdf.js — vrátí objekt s metodou getPage()
+      const pdfDokument = await pdfjsLib.getDocument({ data: buffer.slice() }).promise;
+      const zkracenyNazev = soubor.name.length > 16
+        ? soubor.name.slice(0, 16) + '…'
+        : soubor.name;
+
+      for (let pi = 0; pi < pdfDokument.numPages; pi++) {
+        // Vezmu konkrétní stránku a vyrenderuju ji do Canvas prvku
+        const stranka   = await pdfDokument.getPage(pi + 1);
+        const vyrez     = stranka.getViewport({ scale: .42 });
+        const platno    = document.createElement('canvas');
+        platno.width    = vyrez.width;
+        platno.height   = vyrez.height;
+        await stranka.render({ canvasContext: platno.getContext('2d'), viewport: vyrez }).promise;
+
+        // Vytvořím kontejner pro náhled
+        const nahled = document.createElement('div');
+        nahled.className = 'nahled-stranky';
+        if (typ === 'spojit') {
+          // Označím si index souboru a stránky — budu to potřebovat při exportu
+          nahled.draggable  = true;
+          nahled.dataset.fi = fi;
+          nahled.dataset.pi = pi;
         }
 
-        
-        
+        // ── Řádek s pořadovým číslem ──
+        // Hexagon s číslem + editovatelné pole pro přesun na pozici
+        const radekPoradi = document.createElement('div');
+        radekPoradi.className = 'poradi-radek';
 
-        
-        function selectFunction(functionName) {
-            
-            // Odstranit aktivní třídu ze všech karet
-            document.querySelectorAll('.function-card').forEach(card => {
-                card.classList.remove('active');
-            });
-            
-            // Skrýt všechny workspacy
-            document.querySelectorAll('.workspace').forEach(workspace => {
-                workspace.classList.remove('active');
-            });
-            
-            // Aktivovat vybranou kartu
-            event.target.closest('.function-card').classList.add('active');
-            
-            
-            
-             // Zobrazit vybraný workspace
-            const workspace = document.getElementById(functionName + '-workspace');
-            if (workspace) {
-                workspace.classList.add('active');
-            }
-            
+        const hexCislo = document.createElement('div');
+        hexCislo.className = 'hex-cislo';
+        hexCislo.textContent = globalniCislo;
+        hexCislo.title = 'Pozice stránky ve výsledném dokumentu';
+        radekPoradi.appendChild(hexCislo);
 
+        if (typ === 'spojit') {
+          // Políčko kam napíšu číslo a stránka se tam přesune po Enteru
+          const vstup = document.createElement('input');
+          vstup.type       = 'number';
+          vstup.className  = 'pole-pozice';
+          vstup.value      = globalniCislo;
+          vstup.min        = 1;
+          vstup.title      = 'Zadej číslo a stiskni Enter — stránka se přesune na tuto pozici';
 
-            // NeRozšířit container pro merge a F
-            if (functionName === 'merge' || functionName === 'split') {
-            /*    expandForDisplayPDF();
-            } else {*/
-                resetLayout();
-            }
-            
-            updateButtonStates();
-        }
-       
-               
-        
-        function expandForDisplayPDF() {
-            const elements = [
-                'main-container',
-                'main-header',
-                'main-function-grid',
-                'displayPDF-upload-area',
-                'displayPDF-file-list',
-                'pdf-container',
-                'back-button',
-                'poznamka-button'
-                
-                
-                
-            ];
+          // Při mousedown zastavím propagaci — aby se nezahájil drag celé karty
+          vstup.addEventListener('mousedown', e => e.stopPropagation());
+          vstup.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); presunNahledNaPozici(nahled, parseInt(this.value)); }
+          });
+          vstup.addEventListener('blur', function() {
+            presunNahledNaPozici(nahled, parseInt(this.value));
+          });
 
-            elements.forEach(id => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.classList.add('expanded');
-                } else {
-                    console.warn(`Element s ID "${id}" nebyl nalezen.`);
-                }
-            });
-            // Přidání třídy 'expanded' ke všem elementům s třídou 'function-card'
-                const functionCards = document.querySelectorAll('.function-card');
-                functionCards.forEach(card => {
-                    card.classList.add('expanded');
-                });
-
-                if (functionCards.length === 0) {
-                    console.warn("Žádné elementy s třídou 'function-card' nebyly nalezeny.");
-                }
-        }
-            
-        
-        function resetLayout() {
-            const elements = [
-                { id: 'main-container' },
-                { id: 'main-header' },
-                { id: 'main-function-grid' },
-                { id: 'displayPDF-upload-area' },
-                { id: 'displayPDF-file-list' },
-                { id: 'pdf-container' },
-                { id: 'back-button' },
-                { id: 'poznamka-button'}                
-                
-            ];
-
-            // Odstranění třídy 'expanded' z jednotlivých elementů podle ID
-            elements.forEach(({ id }) => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.classList.remove('expanded');
-                } else {
-                    console.warn(`Element s ID "${id}" nebyl nalezen.`);
-                }
-            });
-
-            // Odstranění třídy 'expanded' ze všech elementů s třídou 'function-card'
-            const functionCards = document.querySelectorAll('.function-card');
-            functionCards.forEach(card => {
-                card.classList.remove('expanded');
-            });
-
-            if (functionCards.length === 0) {
-                console.warn("Žádné elementy s třídou 'function-card' nebyly nalezeny.");
-            }
-
-            // Vyčištění obsahu pdf-container
-            const pdfContainer = document.getElementById('pdf-container');
-            if (pdfContainer) {
-                pdfContainer.innerHTML = `
-                    <p>Zde se zobrazí váš PDF dokument po nahrání</p>
-                `;
-            } else {
-                console.warn("Element s ID 'pdf-container' nebyl nalezen.");
-            }
+          radekPoradi.appendChild(vstup);
         }
 
-        function goBackToMain() {
-            resetLayout();
-            document.querySelectorAll('.workspace').forEach(workspace => {
-                workspace.classList.remove('active');
-            });
-            document.querySelectorAll('.function-card').forEach(card => {
-                card.classList.remove('active');
-            });
+        nahled.appendChild(radekPoradi);
+        nahled.appendChild(platno); // samotný obrázek stránky
+
+        // Popisek se zkráceným názvem souboru
+        const popisek = document.createElement('div');
+        popisek.className   = 'nahled-popisek';
+        popisek.textContent = zkracenyNazev;
+        nahled.appendChild(popisek);
+
+        // Ovládací tlačítka — jen pro záložku Spojit
+        if (typ === 'spojit') {
+          const ovladani = document.createElement('div');
+          ovladani.className = 'ctrl-nahledu';
+          ovladani.innerHTML = `
+            <button class="tc tc-posun" title="Posun doleva"
+                    onclick="posunNahled(this.closest('.nahled-stranky'),-1)">◀</button>
+            <button class="tc tc-posun" title="Posun doprava"
+                    onclick="posunNahled(this.closest('.nahled-stranky'),1)">▶</button>
+            <button class="tc tc-otoceni" title="Otočit o 90° doleva"
+                    onclick="otocStranu(${fi},${pi},-90)">↺</button>
+            <button class="tc tc-otoceni" title="Otočit o 90° doprava"
+                    onclick="otocStranu(${fi},${pi},90)">↻</button>
+            <button class="tc tc-smazat" title="Smazat tuto stránku"
+                    onclick="smazStranu(${fi},${pi})">🗑️</button>`;
+          nahled.appendChild(ovladani);
         }
 
+        fragment.appendChild(nahled);
+        globalniCislo++;
+      }
+    }
+  } catch(chyba) {
+    console.error('Chyba při generování náhledů:', chyba);
+    mrizka.innerHTML = '<div class="sm sm-err">⚠️ Chyba při načítání náhledů.</div>';
+    return;
+  }
 
-        /* function makePoznamka() {
-        }*/
+  mrizka.innerHTML = '';
+  mrizka.appendChild(fragment);
 
+  // Nastaveí drag & drop pro přeřazení stránek (jen Spojit)
+  if (typ === 'spojit') { nastavDnDNahledu(); obnovCisla(); }
+}
 
+// ═══════════════════════════════════════════════
+//  POSUN NÁHLEDU O 1 MÍSTO DOLEVA / DOPRAVA
+// ═══════════════════════════════════════════════
+function posunNahled(nahled, smer) {
+  const mrizka = nahled.parentNode;
+  const potomci = [...mrizka.children];
+  const idx = potomci.indexOf(nahled);
+  if (smer === -1) {
+    if (idx === 0) return;
+    mrizka.insertBefore(nahled, potomci[idx - 1]);
+  } else {
+    if (idx === potomci.length - 1) return;
+    mrizka.insertBefore(nahled, potomci[idx + 1].nextSibling);
+  }
+  obnovCisla(); // přečísluji hexagony a inputy
+}
 
+// ═══════════════════════════════════════════════
+//  PŘESUN NÁHLEDU NA KONKRÉTNÍ POZICI
+//  Zadám číslo do políčka a stránka se tam okamžitě přesune
+// ═══════════════════════════════════════════════
+function presunNahledNaPozici(nahled, pozice) {
+  const mrizka = nahled.parentNode;
+  const potomci = [...mrizka.children];
+  const celkem = potomci.length;
 
+  if (isNaN(pozice)) pozice = potomci.indexOf(nahled) + 1;
+  pozice = Math.max(1, Math.min(pozice, celkem)); // omezím na platný rozsah
 
-        function selectFiles(type) {
-            document.getElementById(type + '-files').click();
+  const aktualniIdx = potomci.indexOf(nahled);
+  if (pozice - 1 === aktualniIdx) { obnovCisla(); return; } // nic se nezměnilo
+
+  const reference = potomci[pozice - 1];
+  if (aktualniIdx < pozice - 1) {
+    mrizka.insertBefore(nahled, reference.nextSibling);
+  } else {
+    mrizka.insertBefore(nahled, reference);
+  }
+  obnovCisla();
+}
+
+// ═══════════════════════════════════════════════
+//  OBNOVA ČÍSLOVÁNÍ
+//  Po každém přesunu přepíšu čísla v hexagonech a políčkách
+// ═══════════════════════════════════════════════
+function obnovCisla() {
+  const nahledy = [...document.querySelectorAll('#nahled-spojit .nahled-stranky')];
+  nahledy.forEach((n, i) => {
+    const hex  = n.querySelector('.hex-cislo');
+    const vstup = n.querySelector('.pole-pozice');
+    if (hex) hex.textContent = i + 1;
+    // Aktualizuju políčko jen pokud v něm zrovna nepíšu
+    if (vstup && document.activeElement !== vstup) vstup.value = i + 1;
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  DRAG & DROP PRO NÁHLEDY STRÁNEK (záložka Spojit)
+// ═══════════════════════════════════════════════
+function nastavDnDNahledu() {
+  document.querySelectorAll('#nahled-spojit .nahled-stranky').forEach(n => {
+    n.addEventListener('dragstart', e => {
+      // Pokud kliknul na input, drag nezahajuji
+      if (e.target.tagName === 'INPUT') { e.preventDefault(); return; }
+      zdrojDragu = n;
+      n.classList.add('tahana');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    n.addEventListener('dragover', e => e.preventDefault());
+    n.addEventListener('drop', e => {
+      e.stopPropagation();
+      if (zdrojDragu && zdrojDragu !== n) {
+        const potomci = [...n.parentNode.children];
+        // Vložím přetažený prvek na správnou stranu cíle
+        if (potomci.indexOf(zdrojDragu) > potomci.indexOf(n)) {
+          n.parentNode.insertBefore(zdrojDragu, n);
+        } else {
+          n.parentNode.insertBefore(zdrojDragu, n.nextSibling);
         }
-       // vymazáno 2025_09_05 
-       // function selectOutputFolder(type) {
-       //     cons_ folder = prompt("Zadejte cestu k cílové složce:");
-       //     if (folder) {
-       //         document.getElementById(type + '-output-folder').value = folder;
-       //     }
-       // }
-
-        function handleFileDrop(event) {
-            event.preventDefault();
-            event.currentTarget.classList.remove('dragover');
-            
-            const files = Array.from(event.dataTransfer.files).filter(file => file.type === 'application/pdf');
-            if (files.length > 0) {
-                handleFiles(files, currentFunction);
-            }
-        }
-
-        function handleDragOver(event) {
-            event.preventDefault();
-            event.currentTarget.classList.add('dragover');
-        }
-
-        function handleDragLeave(event) {
-            event.currentTarget.classList.remove('dragover');
-        }
-
-        function handleFileSelect(event, type) {
-            const files = Array.from(event.target.files).filter(file => file.type === 'application/pdf');
-            handleFiles(files, type);
-        }
-
-        async function handleFiles(files, type) {
-            if (type === 'split' || type === 'displayPDF') {
-                if (files.length > 0) {
-                    uploadedFiles[type] = [files[0]];
-                }                     
-            }                       
-            
-            else {
-                uploadedFiles[type] = [...uploadedFiles[type], ...files];
-            }
-            await updateFileList(type);
-            updateButtonStates();
-        }
-
-
-
-        // Nová funkce pro posouvání souborů
-        function moveFile(type, index, direction) {
-            const newIndex = index + direction;
-            if (newIndex >= 0 && newIndex < uploadedFiles[type].length) {
-                const [movedItem] = uploadedFiles[type].splice(index, 1);
-                uploadedFiles[type].splice(newIndex, 0, movedItem);
-                updateFileList(type);
-            }
-        }
-
-        // Nová funkce pro odstranění všech souborů
-        function removeAllFiles(type) {
-            uploadedFiles[type] = [];
-            updateFileList(type);
-            updateButtonStates();
-            // Speciální ošetření pro displayPDF
-            if (type === 'displayPDF') {
-                document.getElementById('pdf-container').innerHTML = `<p style="text-align: center; padding: 40px; color: #666;">Zde se zobrazí váš PDF dokument po nahrání</p>`;
-                resetLayout();
-            }
-            // Vyčištění náhledu pro merge/split
-            if (type === 'merge' || type === 'split') {
-                document.getElementById(type + '-preview').innerHTML = '';
-            }
-        }
-
-
-        async function updateFileList(type) {
-            const listElement = document.getElementById(type + '-file-list');
-            listElement.innerHTML = '';
-            
-            if (type === 'merge') {
-                for (let i = 0; i < uploadedFiles[type].length; i++) {
-                    const file = uploadedFiles[type][i];
-                    const fileItem = document.createElement('div');
-                    fileItem.className = 'file-item';
-                    fileItem.setAttribute('draggable', true);
-                    fileItem.dataset.index = i;
-                    
-                    let pageCount = '...';
-                    try {
-                        const arrayBuffer = await file.arrayBuffer();
-                        const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
-                        pageCount = pdfDoc.getPages().length;
-                    } catch (e) {
-                        console.error("Chyba při získávání počtu stránek:", e);
-                    }
-
-                    fileItem.innerHTML = `
-                        <div>
-                            <div class="file-name">${file.name}</div>
-                            <div class="file-size">${(file.size / 1024 / 1024).toFixed(2)} MB, ${pageCount} stránek</div>
-                        </div>
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <button class="rotate-button" style="background:#5cb85c; padding: 5px 8px;" onclick="moveFile('${type}', ${i}, -1)" ${i === 0 ? 'disabled' : ''}>↑</button>
-                            <button class="rotate-button" style="background:#5cb85c; padding: 5px 8px;" onclick="moveFile('${type}', ${i}, 1)" ${i === uploadedFiles[type].length - 1 ? 'disabled' : ''}>↓</button>
-                            <button class="remove-file" onclick="removeFile('${type}', ${i})">Odstranit</button>
-                        </div>
-                    `;
-                    listElement.appendChild(fileItem);
-                }
-                setupFileDragAndDrop();
-                // setupDragAndDrop();
-                generatePreview(type);                                    
-            
-            } else if (type === 'split'  && uploadedFiles[type].length > 0) {
-                 const file = uploadedFiles[type][0];
-                 const fileItem = document.createElement('div');
-                 fileItem.className = 'file-item';
-                 const arrayBuffer = await file.arrayBuffer();
-                 const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
-                 const pageCount = pdfDoc.getPages().length;
-                 fileItem.innerHTML = `
-                    <div>
-                        <div class="file-name">${file.name}</div>
-                        <div class="file-size">${(file.size / 1024 / 1024).toFixed(2)} MB, ${pageCount} stránek</div>
-                    </div>
-                    <button class="remove-file" onclick="removeFile('${type}', 0)">Odstranit</button>
-                 `;
-                 listElement.appendChild(fileItem);
-                await generatePreview(type);
-
-
-            
-            }  else if (type === 'displayPDF' && uploadedFiles[type].length > 0) {       
-                const file = uploadedFiles[type][0];
-                const fileItem = document.createElement('div');
-                fileItem.className = 'file-item';
-                
-                fileItem.innerHTML = `
-                    <div>
-                        <div class="file-name">${file.name}</div>
-                        <div class="file-size">${(file.size / 1024 / 1024).toFixed(2)} MB</div>
-                    </div>
-                    <button class="remove-file" onclick="removeFile('displayPDF', 0)">Odstranit</button>
-                `;
-                
-                listElement.appendChild(fileItem);
-                
-                // Zobrazit PDF
-                await displayPDF(file);
-            }       
-        }
-     
-             
-       
-  
-        async function displayPDF(file) {
-            const container = document.getElementById('pdf-container');
-
-            // Ověření, že soubor existuje a je PDF
-            if (!file || file.type !== 'application/pdf') {
-                console.error("Neplatný soubor nebo není PDF:", file);
-                container.innerHTML = `
-                    <div class="error-message">
-                        <p>Prosím, vyberte platný PDF soubor.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            try {
-                // Vytvořit URL pro objekt PDF
-                const fileURL = URL.createObjectURL(file);
-                
-                // Vytvořit iframe pro zobrazení PDF
-                container.innerHTML = `
-                    <iframe id="pdf-viewer" src="${fileURL}" type="application/pdf" width="100%" height="100%">
-                        Váš prohlížeč nepodporuje zobrazení PDF. 
-                        <a href="${fileURL}" download="${file.name}">Stáhnout PDF</a>
-                    </iframe>
-                `;
-            } catch (error) {
-                console.error("Chyba při zobrazování PDF:", error);
-                container.innerHTML = `
-                    <div class="error-message">
-                        <p>Nepodařilo se načíst PDF soubor. Zkuste to prosím znovu.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            // Volání expandForDisplayPDF odděleně
-            try {
-                expandForDisplayPDF();
-            } catch (error) {
-                console.error("Chyba při volání expandForDisplayPDF:", error);
-            }
-        }
-
-
-
-
-
-
-
-
-        function setupFileDragAndDrop() {
-            const listItems = document.querySelectorAll('#merge-file-list .file-item');
-            listItems.forEach(item => {
-                item.addEventListener('dragstart', handleFileDragStart);
-                item.addEventListener('dragover', handleFileDragOver);
-                item.addEventListener('drop', handleFileDropList);
-                item.addEventListener('dragend', handleDragEnd);
-            });
-        }
-        
-        function handleFileDragStart(e) {
-            this.classList.add('dragging');
-            dragSrcEl = this;
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', this.dataset.index);
-        }
-        
-        function handleFileDragOver(e) {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-        }
-        
-        function handleFileDropList(e) {
-            e.stopPropagation();
-            if (dragSrcEl !== this) {
-                const dragIndex = parseInt(dragSrcEl.dataset.index);
-                const dropIndex = parseInt(this.dataset.index);
-                
-                const [draggedItem] = uploadedFiles.merge.splice(dragIndex, 1);
-                uploadedFiles.merge.splice(dropIndex, 0, draggedItem);
-                
-                updateFileList('merge');
-            }
-            return false;
-        }
-
-        function handleDragEnd(e) {
-            this.classList.remove('dragging');
-        }
-
-        // Funkce pro řazení stránek
-        function setupPageDragAndDrop() {
-            const listItems = document.querySelectorAll('#merge-preview .page-preview');
-            listItems.forEach(item => {
-                item.addEventListener('dragstart', handlePageDragStart);
-                item.addEventListener('dragover', handlePageDragOverList);
-                item.addEventListener('drop', handlePageDropList);
-                item.addEventListener('dragend', handlePageDragEnd);
-            });
-        }
-
-        function handlePageDragStart(e) {
-            this.classList.add('dragging');
-            dragSrcEl = this;
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', this.dataset.fileIndex + ',' + this.dataset.pageIndex);
-        }
-
-        function handlePageDragOverList(e) {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-        }
-
-        function handlePageDropList(e) {
-            e.stopPropagation();
-            if (dragSrcEl !== this) {
-                const parent = this.parentNode;
-                const children = Array.from(parent.children);
-                
-                const dragIndex = children.indexOf(dragSrcEl);
-                const dropIndex = children.indexOf(this);
-                
-                if (dragIndex > dropIndex) {
-                    parent.insertBefore(dragSrcEl, this);
-                } else {
-                    parent.insertBefore(dragSrcEl, this.nextSibling);
-                }
-            }
-            return false;
-        }
-
-        function handlePageDragEnd(e) {
-            this.classList.remove('dragging');
-        }
-
-
-        function removeFile(type, index) {
-            uploadedFiles[type].splice(index, 1);
-            updateFileList(type);
-            updateButtonStates();
-            if (type === 'displayPDF') {
-                document.getElementById('pdf-container').innerHTML = ''; // Vyčistí zobrazení PDF
-            }
-        }
-
-
-    
-    
-        async function generatePreview(type) {
-        const previewElement = document.getElementById(type + '-preview');
-        previewElement.innerHTML = '<div class="loading-indicator">Načítání náhledů...</div>';
-
-        try {
-            for (let fileIndex = 0; fileIndex < uploadedFiles[type].length; fileIndex++) {
-                const file = uploadedFiles[type][fileIndex];
-                const arrayBuffer = await file.arrayBuffer();
-                const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
-                const pdfjsDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-                const pages = pdfDoc.getPages();
-
-                // Zkrácení názvu souboru s elipsou, pokud je delší než 20 znaků
-                const shortName = file.name.length > 20 ? file.name.substring(0, 20) + '...' : file.name;
-
-                for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
-                    const pdfjsPage = await pdfjsDoc.getPage(pageIndex + 1);
-
-                    // Vytvoření kontejneru pro náhled stránky
-                    const pagePreview = document.createElement('div');
-                    pagePreview.className = 'page-preview';
-
-                    // Drag & drop jen pro režim merge
-                    if (type === 'merge') {
-                    pagePreview.setAttribute('draggable', true);
-                    pagePreview.dataset.fileIndex = fileIndex;
-                    pagePreview.dataset.pageIndex = pageIndex;
-                    }
-
-                    // Stylování náhledu pro lepší vzhled
-                    pagePreview.style.display = 'inline-block';
-                    pagePreview.style.margin = '10px';
-                    pagePreview.style.padding = '10px';
-                    pagePreview.style.background = '#f5f5f5';
-                    pagePreview.style.border = '1px solid #ddd';
-                    pagePreview.style.borderRadius = '5px';
-                    pagePreview.style.textAlign = 'center';
-                    pagePreview.style.maxWidth = '200px';
-
-                    // Vytvoření plátna pro vykreslení stránky
-                    const viewport = pdfjsPage.getViewport({ scale: 0.5 });
-                    const canvas = document.createElement('canvas');
-                    canvas.width = viewport.width;
-                    canvas.height = viewport.height;
-                    canvas.style.border = '1px solid #ccc';
-                    canvas.style.borderRadius = '3px';
-                    const canvasContext = canvas.getContext('2d');
-
-                    // Vykreslení stránky na plátno
-                    await pdfjsPage.render({ canvasContext, viewport }).promise;
-                    pagePreview.appendChild(canvas);
-
-                    // Přidání názvu souboru a čísla stránky
-                    const pageNumberText = document.createElement('div');
-                    pageNumberText.className = 'page-number';
-                    pageNumberText.style.fontSize = '14px';
-                    pageNumberText.style.marginTop = '8px';
-                    pageNumberText.style.color = '#333';
-                    pageNumberText.textContent = `Strana ${pageIndex + 1} - ${shortName}`;
-                    pagePreview.appendChild(pageNumberText);
-
-                    // Přidání ovládacích prvků pro rotaci
-                    
-                    // Ovládací prvky pro merge i split (bez deletePage pro split)
-                    if (type === 'merge' || type === 'split') {
-                            const rotationControls = document.createElement('div');
-                            rotationControls.className = 'rotation-controls';
-                            rotationControls.style.marginTop = '8px';
-                            
-                            
-                            let buttonsHTML = `
-                                
-                            `;
-
-                            if (type === 'merge') {
-                                buttonsHTML += `
-                                <button class="rotate-button" style="margin: 0 5px; padding: 5px 5px; font-size: 12px;" onclick="rotatePage(${fileIndex}, ${pageIndex}, -90)">↺ 90° doleva</button>
-                                <button class="rotate-button" style="margin: 0 5px; padding: 5px 5px; font-size: 12px;" onclick="rotatePage(${fileIndex}, ${pageIndex}, 90)">↻ 90° doprava</button>
-                                <button class="deletePage-button" style="margin: 0 5px; padding: 5px 5px; font-size: 12px;" onclick="deletePage(${fileIndex}, ${pageIndex})">🗑️</button>
-                                `;
-                            }
-                                                   
-                            rotationControls.innerHTML= buttonsHTML;
-                            pagePreview.appendChild(rotationControls);
-                        }
-
-                    previewElement.appendChild(pagePreview);
-                }
-            }
-        } catch (e) {
-            console.error("Chyba při generování náhledu:", e);
-            previewElement.innerHTML = '<div class="error-message" style="color: red;">Chyba při načítání náhledů.</div>';
-        }
-
-        // Odstranění indikátoru načítání po dokončení
-        const loadingIndicator = previewElement.querySelector('.loading-indicator');
-        if (loadingIndicator) loadingIndicator.remove();
-
-        
-        if (type === 'merge') {
-                setupPageDragAndDrop();
-            }
-
-        }
-
-
-        
-
-
-     
-        async function deletePage(fileIndex, pageIndex) {
-            showStatus('merge', `Mazání stránky ${pageIndex + 1}...`, 'info');
-
-            try {
-                const file = uploadedFiles.merge[fileIndex];
-                const arrayBuffer = await file.arrayBuffer();
-                const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
-                const pages = pdfDoc.getPages();
-
-                if (pages.length > pageIndex) {
-                    pdfDoc.removePage(pageIndex);
-
-                    const modifiedPdfBytes = await pdfDoc.save();
-                    const modifiedFile = new File([modifiedPdfBytes], file.name, { type: 'application/pdf' });
-                    uploadedFiles.merge[fileIndex] = modifiedFile;
-
-                    showStatus('merge', `Stránka ${pageIndex + 1} byla úspěšně smazána.`, 'success');
-                    generatePreview('merge');
-                } else {
-                    showStatus('merge', `Stránka ${pageIndex + 1} neexistuje.`, 'warning');
-                }
-            } catch (error) {
-                console.error('Chyba při mazání stránky:', error);
-                showStatus('merge', 'Nepodařilo se smazat stránku. Zkuste to znovu.', 'error');
-            }
-        }
-
-
-
-    
-
-        async function rotatePage(fileIndex, pageIndex, degrees) {
-            showStatus('merge', `Otočení stránky ${pageIndex + 1} o ${degrees}°`, 'info');
-
-            try {
-                const file = uploadedFiles.merge[fileIndex];
-                const arrayBuffer = await file.arrayBuffer();
-                const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
-                const pages = pdfDoc.getPages();
-
-                if (pages.length > pageIndex) {
-                    const page = pages[pageIndex];
-                    const currentRotation = page.getRotation().angle;
-                    page.setRotation(PDFLib.degrees(currentRotation + degrees));
-                    
-                    const modifiedPdfBytes = await pdfDoc.save();
-                    const modifiedFile = new File([modifiedPdfBytes], file.name, { type: 'application/pdf' });
-                    uploadedFiles.merge[fileIndex] = modifiedFile;
-                    //|| 'split'
-                    showStatus('merge', `Stránka ${pageIndex + 1} byla úspěšně otočena.`, 'success');
-                    generatePreview('merge');
-                }
-            } catch (error) {
-                console.error('Chyba při otáčení stránky:', error);
-                showStatus('merge', 'Nepodařilo se otočit stránku. Zkuste to znovu.', 'error');
-            }
-        }
-
-        function togglePageSelection(element) {
-            element.classList.toggle('selected');
-        }
-
-        function updateButtonStates() {
-            const mergeButton = document.getElementById('merge-button');
-            const splitButton = document.getElementById('split-button');
-            const removeAllMergeButton = document.getElementById('remove-all-merge-button'); // NOVÁ PROMĚNNÁ
-            
-            if (mergeButton) {
-                mergeButton.disabled = uploadedFiles.merge.length === 0;
-            }
-            
-            // NOVÁ KONTROLA
-            if (removeAllMergeButton) {
-                removeAllMergeButton.disabled = uploadedFiles.merge.length === 0;
-            }
-
-            if (splitButton) {
-                splitButton.disabled = uploadedFiles.split.length === 0;
-            }
-        }
-
-        function showProgress(type, show = true) {
-            const progressElement = document.getElementById(type + '-progress');
-            if (progressElement) {
-                progressElement.style.display = show ? 'block' : 'none';
-                if (show) {
-                    animateProgress(type);
-                }
-            }
-        }
-
-        function animateProgress(type) {
-            const fillElement = document.querySelector(`#${type}-progress .progress-fill`);
-            let width = 0;
-            const interval = setInterval(() => {
-                width += Math.random() * 10;
-                if (width >= 100) {
-                    width = 100;
-                    clearInterval(interval);
-                }
-                fillElement.style.width = width + '%';
-            }, 100);
-        }
-
-        function showStatus(type, message, statusType = 'info') {
-            const statusElement = document.getElementById(type + '-status');
-            if (statusElement) {
-                statusElement.innerHTML = `<div class="status-message status-${statusType}">${message}</div>`;
-                setTimeout(() => {
-                    if (statusType !== 'error') {
-                        statusElement.innerHTML = '';
-                    }
-                }, 5000);
-            }
-        }
-
-        async function processMerge() {
-            if (uploadedFiles.merge.length === 0) return;
-            
-            showProgress('merge');
-            showStatus('merge', 'Spojování PDF souborů...', 'info');
-
-            try {
-                const mergedPdf = await PDFLib.PDFDocument.create();
-                
-                const previewPages = document.querySelectorAll('#merge-preview .page-preview');
-                const fileElements = document.querySelectorAll('#merge-file-list .file-item');
-                const orderedFilesMap = new Map();
-                fileElements.forEach(element => {
-                    const originalIndex = parseInt(element.dataset.index);
-                    orderedFilesMap.set(originalIndex, uploadedFiles.merge[originalIndex]);
-                });
-
-                for (const pageElement of previewPages) {
-                    const fileIndex = parseInt(pageElement.dataset.fileIndex);
-                    const pageIndex = parseInt(pageElement.dataset.pageIndex);
-                    const file = uploadedFiles.merge[fileIndex];
-
-                    const pdfDoc = await PDFLib.PDFDocument.load(await file.arrayBuffer());
-                    const copiedPages = await mergedPdf.copyPages(pdfDoc, [pageIndex]);
-                    mergedPdf.addPage(copiedPages[0]);
-                }
-                
-                const mergedPdfBytes = await mergedPdf.save();
-                const outputName = document.getElementById('merge-output-name').value || 'spojeny-dokument.pdf';
-                downloadFile(mergedPdfBytes, outputName);
-
-                showProgress('merge', false);
-                showStatus('merge', `PDF soubory byly úspěšně spojeny a staženy jako "${outputName}"`, 'success');
-
-            } catch (error) {
-                console.error('Chyba při spojování PDF:', error);
-                showProgress('merge', false);
-                showStatus('merge', 'Nepodařilo se spojit PDF soubory. Zkuste to znovu.', 'error');
-            }
-        }
-
-        async function processSplit() {
-            if (uploadedFiles.split.length === 0) return;
-            
-            const ranges = document.getElementById('split-ranges').value;
-            if (!ranges) {
-                showStatus('split', 'Zadejte rozsahy stránek pro rozdělení', 'error');
-                return;
-            }
-
-            showProgress('split');
-            showStatus('split', 'Rozdělování PDF souboru...', 'info');
-            
-            try {
-                const file = uploadedFiles.split[0];
-                const pdfDoc = await PDFLib.PDFDocument.load(await file.arrayBuffer());
-                const allPages = pdfDoc.getPages();
-                const parsedRanges = parseRanges(ranges, allPages.length);
-
-                for (const [index, pageIndices] of parsedRanges.entries()) {
-                    const newPdf = await PDFLib.PDFDocument.create();
-                    const copiedPages = await newPdf.copyPages(pdfDoc, pageIndices.map(p => p - 1));
-                    copiedPages.forEach(page => newPdf.addPage(page));
-                    const newPdfBytes = await newPdf.save();
-                    const newFilename = `${file.name.replace('.pdf', '')}-cast-${index + 1}.pdf`;
-                    downloadFile(newPdfBytes, newFilename);
-                }
-
-                showProgress('split', false);
-                showStatus('split', `PDF byl úspěšně rozdělen na ${parsedRanges.length} souborů a stažen.`, 'success');
-
-            } catch (error) {
-                console.error('Chyba při rozdělování PDF:', error);
-                showProgress('split', false);
-                showStatus('split', 'Nepodařilo se rozdělit PDF soubor. Zkontrolujte rozsahy stránek.', 'error');
-            }
-        }
-        
-        function parseRanges(rangeString, totalPages) {
-            const ranges = rangeString.split(',').map(s => s.trim());
-            const result = [];
-            for (const range of ranges) {
-                if (range.includes('-')) {
-                    const [start, end] = range.split('-').map(Number);
-                    if (start >= 1 && end <= totalPages && start <= end) {
-                        const pages = [];
-                        for (let i = start; i <= end; i++) pages.push(i);
-                        result.push(pages);
-                    }
-                } else {
-                    const page = Number(range);
-                    if (page >= 1 && page <= totalPages) {
-                        result.push([page]);
-                    }
-                }
-            }
-            return result;
-        }
-
-        // Inicializace - zobrazit první funkci
-        window.onload = function() {
-            selectFunction('merge');
-            document.querySelector('.function-card').click();
-        };
-
-        // Zabránění výchozímu chování při drag&drop
-        document.addEventListener('dragover', function(e) {
-            e.preventDefault();
-        });
-
-        document.addEventListener('drop', function(e) {
-            e.preventDefault();
-        });
-    </script>
-
+        obnovCisla();
+      }
+    });
+    n.addEventListener('dragend', () => { n.classList.remove('tahana'); obnovCisla(); });
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  PDF ČTENÁŘ — zobrazení souboru v iframe
+//  Vytvořím lokální blob URL — soubor nikam neodesílám
+// ═══════════════════════════════════════════════
+function zobrazPDF(soubor) {
+  const url = URL.createObjectURL(soubor);
+  document.getElementById('ctenar-wrap').innerHTML =
+    `<iframe id="pdf-iframe" src="${url}" title="${escapuj(soubor.name)}"></iframe>`;
+}
+
+// ═══════════════════════════════════════════════
+//  OTOČENÍ STRÁNKY
+//  Načtu PDF, otočím konkrétní stránku, uložím zpět do pole souborů
+// ═══════════════════════════════════════════════
+async function otocStranu(fi, pi, stupne) {
+  nastavStav('spojit', 'Otáčím stránku…', 'inf');
+  try {
+    const soubor = soubory.spojit[fi];
+    const doc    = await PDFLib.PDFDocument.load(await soubor.arrayBuffer());
+    const strany = doc.getPages();
+    if (strany[pi]) {
+      // Přičtu stupně k aktuální rotaci, modulo 360 pro čisté výsledky
+      strany[pi].setRotation(PDFLib.degrees(
+        (strany[pi].getRotation().angle + stupne + 360) % 360
+      ));
+      // Přepíšu soubor v poli novou verzí s otočenou stránkou
+      soubory.spojit[fi] = new File([await doc.save()], soubor.name, { type: 'application/pdf' });
+      nastavStav('spojit', `Stránka ${pi+1} otočena.`, 'ok');
+      await vygenerujNahledy('spojit'); // obnovím náhledy
+    }
+  } catch(e) { nastavStav('spojit', 'Chyba při otáčení stránky.', 'err'); }
+}
+
+// ═══════════════════════════════════════════════
+//  SMAZÁNÍ STRÁNKY
+//  Odstraním konkrétní stránku z PDF souboru
+// ═══════════════════════════════════════════════
+async function smazStranu(fi, pi) {
+  nastavStav('spojit', `Mažu stránku ${pi+1}…`, 'inf');
+  try {
+    const soubor = soubory.spojit[fi];
+    const doc    = await PDFLib.PDFDocument.load(await soubor.arrayBuffer());
+    if (doc.getPageCount() <= pi) return;
+    doc.removePage(pi);
+    soubory.spojit[fi] = new File([await doc.save()], soubor.name, { type: 'application/pdf' });
+    nastavStav('spojit', `Stránka ${pi+1} smazána.`, 'ok');
+    await vykresliSeznam('spojit'); // obnovím celý seznam i náhledy
+  } catch(e) { nastavStav('spojit', 'Chyba při mazání stránky.', 'err'); }
+}
+
+// ═══════════════════════════════════════════════
+//  SPOJENÍ PDF — hlavní funkce záložky Spojit
+//  Procházím náhledy v aktuálním DOM pořadí (které odpovídá
+//  výsledku drag & drop operací) a kopíruji stránky do nového PDF
+// ═══════════════════════════════════════════════
+async function provedSpojeni() {
+  if (!soubory.spojit.length) return;
+  zobrazProgres('spojit', true);
+  nastavStav('spojit', 'Spojuji PDF soubory…', 'inf');
+
+  try {
+    const vysledek = await PDFLib.PDFDocument.create();
+
+    // DOM pořadí náhledů = výsledné pořadí stránek
+    const nahledy = document.querySelectorAll('#nahled-spojit .nahled-stranky');
+    for (const nahled of nahledy) {
+      const fi = parseInt(nahled.dataset.fi);
+      const pi = parseInt(nahled.dataset.pi);
+      // Načtu zdrojový soubor a zkopíruji stránku do výsledného dokumentu
+      const doc = await PDFLib.PDFDocument.load(await soubory.spojit[fi].arrayBuffer());
+      const [kopie] = await vysledek.copyPages(doc, [pi]);
+      vysledek.addPage(kopie);
+    }
+
+    // Přidám .pdf pokud uživatel zapomněl
+    const zadaneJmeno = document.getElementById('jmeno-vystupu').value.trim() || 'spojeny-dokument.pdf';
+    const jmeno = zadaneJmeno.endsWith('.pdf') ? zadaneJmeno : zadaneJmeno + '.pdf';
+
+    stahni(await vysledek.save(), jmeno);
+    zobrazProgres('spojit', false);
+    nastavStav('spojit', `✅ Uloženo jako „${jmeno}"`, 'ok');
+
+  } catch(e) {
+    zobrazProgres('spojit', false);
+    nastavStav('spojit', '⚠️ Nepodařilo se spojit soubory.', 'err');
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  ROZDĚLENÍ PDF — hlavní funkce záložky Rozdělit
+//  Parsuju rozsahy stránek a pro každý rozsah stáhnu nový soubor
+// ═══════════════════════════════════════════════
+async function provedRozdeleni() {
+  if (!soubory.rozdelit.length) return;
+  const rozsahText = document.getElementById('rozsahy-stranek').value.trim();
+  if (!rozsahText) { nastavStav('rozdelit', 'Zadejte rozsahy stránek.', 'err'); return; }
+
+  zobrazProgres('rozdelit', true);
+  nastavStav('rozdelit', 'Rozděluji PDF…', 'inf');
+
+  try {
+    const soubor = soubory.rozdelit[0];
+    const doc    = await PDFLib.PDFDocument.load(await soubor.arrayBuffer());
+    const celkem = doc.getPageCount();
+    const rozsahy = parsujRozsahy(rozsahText, celkem);
+
+    if (!rozsahy.length) {
+      nastavStav('rozdelit', 'Neplatné rozsahy stránek.', 'err');
+      zobrazProgres('rozdelit', false);
+      return;
+    }
+
+    // Pro každý rozsah vytvořím nový PDF soubor a stáhnu ho
+    for (const [i, strany] of rozsahy.entries()) {
+      const novyDoc = await PDFLib.PDFDocument.create();
+      const kopie   = await novyDoc.copyPages(doc, strany.map(s => s - 1)); // index od 0
+      kopie.forEach(s => novyDoc.addPage(s));
+      stahni(await novyDoc.save(), `${soubor.name.replace(/\.pdf$/i, '')}-cast-${i+1}.pdf`);
+    }
+
+    zobrazProgres('rozdelit', false);
+    nastavStav('rozdelit', `✅ PDF rozdělen na ${rozsahy.length} souborů.`, 'ok');
+
+  } catch(e) {
+    zobrazProgres('rozdelit', false);
+    nastavStav('rozdelit', '⚠️ Nepodařilo se rozdělit PDF.', 'err');
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  PARSOVÁNÍ ROZSAHŮ STRÁNEK
+//  Vstup: "1-3, 5, 7-9" → [[1,2,3], [5], [7,8,9]]
+// ═══════════════════════════════════════════════
+function parsujRozsahy(text, celkem) {
+  return text.split(',').map(s => s.trim()).reduce((acc, cast) => {
+    if (cast.includes('-')) {
+      const [od, do_] = cast.split('-').map(Number);
+      // Validuji — rozsah musí být v mezích dokumentu
+      if (od >= 1 && do_ <= celkem && od <= do_) {
+        const strany = [];
+        for (let i = od; i <= do_; i++) strany.push(i);
+        acc.push(strany);
+      }
+    } else {
+      const s = Number(cast);
+      if (s >= 1 && s <= celkem) acc.push([s]);
+    }
+    return acc;
+  }, []);
+}
+
+// ═══════════════════════════════════════════════
+//  POMOCNÉ FUNKCE
+// ═══════════════════════════════════════════════
+
+// Stáhnu soubor — vytvořím lokální blob URL a kliknu na odkaz
+// Data nikdy neopustí prohlížeč — jdou přímo na disk
+function stahni(data, jmeno) {
+  const url = URL.createObjectURL(new Blob([data], { type: 'application/pdf' }));
+  const odkaz = Object.assign(document.createElement('a'), { href: url, download: jmeno });
+  document.body.appendChild(odkaz);
+  odkaz.click();
+  document.body.removeChild(odkaz);
+  // Uvolním blob z paměti po minutě (po dokončení stahování)
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+// Escapuju HTML znaky aby nedošlo k XSS při vkládání názvů souborů do DOM
+function escapuj(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Zapnu / vypnu tlačítka podle toho, jestli jsou nahrané soubory
+function aktualizujTlacitka(typ) {
+  const mam = soubory[typ].length > 0;
+  if (typ === 'spojit') {
+    document.getElementById('btn-spoj').disabled       = !mam;
+    document.getElementById('btn-spoj-smazat').disabled = !mam;
+  }
+  if (typ === 'rozdelit') {
+    document.getElementById('btn-rozd').disabled         = !mam;
+    document.getElementById('btn-rozd-smazat').disabled  = !mam;
+  }
+  if (typ === 'uprava') {
+    document.querySelectorAll('.btn-uprava-akce').forEach(b => b.disabled = !mam);
+    document.getElementById('btn-upr-smazat').disabled = !mam;
+  }
+}
+
+// Zobrazím stavovou zprávu (úspěch / chyba / info)
+function nastavStav(typ, zprava, druh) {
+  const el = document.getElementById('stav-' + typ);
+  if (!el) return;
+  el.innerHTML = `<div class="sm sm-${druh}">${zprava}</div>`;
+  // Chybové zprávy nechám viditelné, ostatní po 5.5 s schuju
+  if (druh !== 'err') setTimeout(() => { el.innerHTML = ''; }, 5500);
+}
+
+// Animuju progress bar při zpracování
+function zobrazProgres(typ, zobraz) {
+  const pruh  = document.getElementById('progres-' + typ);
+  const plneni = document.getElementById('fill-' + typ);
+  if (!pruh || !plneni) return;
+
+  if (zobraz) {
+    pruh.style.display = 'block';
+    plneni.style.width = '0%';
+    let sirka = 0;
+    clearInterval(casovace[typ]);
+    // Náhodně inkrementuji až do 92 % — přesné 100 % nastavím až po dokončení
+    casovace[typ] = setInterval(() => {
+      sirka = Math.min(sirka + Math.random() * 12, 92);
+      plneni.style.width = sirka + '%';
+    }, 100);
+  } else {
+    clearInterval(casovace[typ]);
+    plneni.style.width = '100%';
+    setTimeout(() => { pruh.style.display = 'none'; plneni.style.width = '0%'; }, 400);
+  }
+}
+
+// Zabráním výchozímu chování prohlížeče při přetažení souborů mimo drop zónu
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop',     e => e.preventDefault());
+</script>
+
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  ZÁLOŽKA UPRAVIT — opravená verze
+//  Každá funkce:
+//    volána s (true)  → ihned uloží a stáhne PDF
+//    volána s (false) → vrátí PDFDocument pro řetězení v hromadném exportu
+//  ✅ Vše lokálně — pdf-lib + pdf.js + Canvas API
+// ═══════════════════════════════════════════════════════════════
+
+// Stav výběru sekcí
+const upravaVybrane = {
+  format: false, cislo: false, voda: false,
+  orez: false, okraje: false, smazMeta: false,
+  meta: false, zmen: false
+};
+
+// Přepne sekci mezi vybráno/nevybráno a přebarví tlačítko
+function prepniVyber(klic) {
+  upravaVybrane[klic] = !upravaVybrane[klic];
+  const btn   = document.getElementById('vyber-' + klic);
+  const sekce = document.getElementById('sekce-' + klic);
+  if (upravaVybrane[klic]) {
+    btn.classList.add('vybrano');
+    btn.textContent = '✓ Vybráno';
+    sekce.classList.add('vybrana');
+  } else {
+    btn.classList.remove('vybrano');
+    btn.textContent = 'Vybrat';
+    sekce.classList.remove('vybrana');
+  }
+  const maNejake = Object.values(upravaVybrane).some(v => v);
+  document.getElementById('btn-vsechny-vybrane').disabled = !maNejake || !soubory.uprava.length;
+  document.getElementById('btn-vymaz-vybrane').disabled   = !maNejake;
+}
+
+// Odznačí všechny sekce
+function vymazVsechnyVybrane() {
+  Object.keys(upravaVybrane).forEach(k => {
+    if (upravaVybrane[k]) prepniVyber(k);
+  });
+}
+
+// ── Pomocné ──────────────────────────────────────────────────
+function mmNaPt(mm) { return mm * 72 / 25.4; }
+
+// Načte první soubor z uprava jako PDFDocument
+async function nactiUpravaDoc() {
+  if (!soubory.uprava.length) throw new Error('Žádný soubor není nahrán.');
+  return PDFLib.PDFDocument.load(await soubory.uprava[0].arrayBuffer());
+}
+
+// Uloží doc a spustí stažení — VŽDY volá window.stahni (z hlavního bloku)
+async function ulozUprava(doc, jmenoFallback) {
+  const pole  = document.getElementById('upr-jmeno-vystupu');
+  const raw   = pole && pole.value.trim() ? pole.value.trim() : (jmenoFallback || 'upraveny.pdf');
+  const jmeno = raw.toLowerCase().endsWith('.pdf') ? raw : raw + '.pdf';
+  const bytes = await doc.save();
+  stahni(bytes, jmeno);
+  zobrazProgres('uprava', false);
+  nastavStav('uprava', '✅ Uloženo jako „' + jmeno + '"', 'ok');
+}
+
+// Obaluje každou funkci — přidá progress bar + error handling
+async function spustAkci(fn, nazev) {
+  if (!soubory.uprava.length) {
+    nastavStav('uprava', 'Nejprve nahrajte PDF soubor.', 'err');
+    return;
+  }
+  zobrazProgres('uprava', true);
+  nastavStav('uprava', 'Provádím: ' + nazev + '…', 'inf');
+  try {
+    await fn();
+  } catch (e) {
+    zobrazProgres('uprava', false);
+    nastavStav('uprava', '⚠️ Chyba: ' + e.message, 'err');
+    console.error(e);
+  }
+}
+
+// Parsuje "1-3, 5" → [0,1,2,4] (0-indexed)
+function parsujStrankyUprava(text, celkem) {
+  if (!text || !text.trim()) return Array.from({ length: celkem }, (_, i) => i);
+  const result = [];
+  text.split(',').forEach(s => {
+    s = s.trim();
+    if (s.includes('-')) {
+      const [od, do_] = s.split('-').map(Number);
+      if (od >= 1 && do_ <= celkem && od <= do_)
+        for (let i = od; i <= do_; i++) result.push(i - 1);
+    } else {
+      const n = Number(s);
+      if (n >= 1 && n <= celkem) result.push(n - 1);
+    }
+  });
+  return [...new Set(result)].sort((a, b) => a - b);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ① ZMĚNA FORMÁTU
+// ═══════════════════════════════════════════════════════════
+async function _upravFormatCore(doc) {
+  const celkem = doc.getPageCount();
+  const idxArr = parsujStrankyUprava(document.getElementById('upr-format-stranky').value, celkem);
+  const fmt    = { A3:[842,1191], A4:[595,842], A5:[420,595], Letter:[612,792], Legal:[612,1008] };
+  let [w, h]   = fmt[document.getElementById('upr-format-cilovy').value] || [595,842];
+  if (document.getElementById('upr-format-orient').value === 'landscape') [w, h] = [h, w];
+  const skal   = document.getElementById('upr-format-skalovat').value === '1';
+  idxArr.forEach(i => {
+    const pg = doc.getPage(i);
+    const { width: ow, height: oh } = pg.getSize();
+    if (skal && ow > 0 && oh > 0) pg.scaleContent(w / ow, h / oh);
+    pg.setSize(w, h);
+  });
+  return doc;
+}
+async function upravFormatStranky(stahni_hned) {
+  if (stahni_hned) {
+    await spustAkci(async () => {
+      const doc = await _upravFormatCore(await nactiUpravaDoc());
+      await ulozUprava(doc, 'format-zmena.pdf');
+    }, 'Změna formátu');
+  } else {
+    return _upravFormatCore(await nactiUpravaDoc());
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ② ČÍSLOVÁNÍ STRÁNEK
+// ═══════════════════════════════════════════════════════════
+async function _pridejCisloCore(doc) {
+  const stranky  = doc.getPages();
+  const celkem   = stranky.length;
+  const font     = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
+  // Číslice a 'Strana' — odstraním diakritiku pro kompatibilitu se StandardFonts
+  const sanitizuj = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\x00-\xFF]/g,'?');
+  const pozice   = document.getElementById('upr-cislo-pozice').value;
+  const zacatek  = parseInt(document.getElementById('upr-cislo-zacatek').value) || 1;
+  const fmt      = document.getElementById('upr-cislo-format').value;
+  const fontSize = parseInt(document.getElementById('upr-cislo-font').value) || 11;
+  stranky.forEach((pg, idx) => {
+    const c  = idx + zacatek;
+    const t  = fmt === 'strana_n' ? 'Strana ' + c : fmt === 'n_z_c' ? c + ' / ' + (celkem + zacatek - 1) : String(c);
+    const { width: w, height: h } = pg.getSize();
+    const tw = font.widthOfTextAtSize(t, fontSize);
+    const m  = mmNaPt(8);
+    let x, y;
+    if      (pozice === 'bottom-center') { x = (w-tw)/2; y = m; }
+    else if (pozice === 'bottom-right')  { x = w-tw-m;   y = m; }
+    else if (pozice === 'bottom-left')   { x = m;         y = m; }
+    else if (pozice === 'top-center')    { x = (w-tw)/2; y = h-m-fontSize; }
+    else                                  { x = w-tw-m;   y = h-m-fontSize; }
+    pg.drawText(sanitizuj(t), { x, y, size: fontSize, font, color: PDFLib.rgb(0.3,0.3,0.3) });
+  });
+  return doc;
+}
+async function pridejCislovani(stahni_hned) {
+  if (stahni_hned) {
+    await spustAkci(async () => {
+      const doc = await _pridejCisloCore(await nactiUpravaDoc());
+      await ulozUprava(doc, 'cislovano.pdf');
+    }, 'Číslování stránek');
+  } else {
+    return _pridejCisloCore(await nactiUpravaDoc());
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ③ VODOZNAK
+// ═══════════════════════════════════════════════════════════
+async function _vodoznamCore(doc) {
+  const font     = await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+  const sanitizujV = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\x00-\xFF]/g,'?');
+  const rawText  = document.getElementById('upr-voda-text').value || 'DUVERNЕ';
+  const text     = sanitizujV(rawText);
+  const opacity  = (parseInt(document.getElementById('upr-voda-opacity').value) || 15) / 100;
+  const fontSize = parseInt(document.getElementById('upr-voda-font').value) || 72;
+  const bMap     = { gray:PDFLib.rgb(.5,.5,.5), red:PDFLib.rgb(.8,.1,.1), blue:PDFLib.rgb(.1,.1,.7), green:PDFLib.rgb(0,.55,.2) };
+  const color    = bMap[document.getElementById('upr-voda-barva').value] || bMap.gray;
+  doc.getPages().forEach(pg => {
+    const { width: w, height: h } = pg.getSize();
+    const tw   = font.widthOfTextAtSize(text, fontSize);
+    const uhel = Math.atan2(h, w);
+    pg.drawText(text, {
+      x: (w - tw * Math.cos(uhel)) / 2,
+      y: (h - fontSize * Math.sin(uhel)) / 2,
+      size: fontSize, font, color, opacity,
+      rotate: PDFLib.degrees(uhel * 180 / Math.PI)
+    });
+  });
+  return doc;
+}
+async function pridejVodoznak(stahni_hned) {
+  if (stahni_hned) {
+    await spustAkci(async () => {
+      const doc = await _vodoznamCore(await nactiUpravaDoc());
+      await ulozUprava(doc, 'vodoznak.pdf');
+    }, 'Vodoznak');
+  } else {
+    return _vodoznamCore(await nactiUpravaDoc());
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ④ OŘEZ (CropBox)
+// ═══════════════════════════════════════════════════════════
+async function _orezCore(doc) {
+  const top    = mmNaPt(parseFloat(document.getElementById('upr-orez-top').value)    || 0);
+  const right  = mmNaPt(parseFloat(document.getElementById('upr-orez-right').value)  || 0);
+  const bottom = mmNaPt(parseFloat(document.getElementById('upr-orez-bottom').value) || 0);
+  const left   = mmNaPt(parseFloat(document.getElementById('upr-orez-left').value)   || 0);
+  doc.getPages().forEach(pg => {
+    const { width: w, height: h } = pg.getSize();
+    pg.setCropBox(left, bottom, w - left - right, h - top - bottom);
+  });
+  return doc;
+}
+async function provedOrez(stahni_hned) {
+  if (stahni_hned) {
+    await spustAkci(async () => {
+      const doc = await _orezCore(await nactiUpravaDoc());
+      await ulozUprava(doc, 'orezan.pdf');
+    }, 'Ořez stránek');
+  } else {
+    return _orezCore(await nactiUpravaDoc());
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ⑤ PŘIDÁNÍ OKRAJŮ (Padding)
+// ═══════════════════════════════════════════════════════════
+async function _okrajeCore(srcDoc) {
+  const top    = mmNaPt(parseFloat(document.getElementById('upr-pad-top').value)    || 0);
+  const right  = mmNaPt(parseFloat(document.getElementById('upr-pad-right').value)  || 0);
+  const bottom = mmNaPt(parseFloat(document.getElementById('upr-pad-bottom').value) || 0);
+  const left   = mmNaPt(parseFloat(document.getElementById('upr-pad-left').value)   || 0);
+  const novy   = await PDFLib.PDFDocument.create();
+  for (let i = 0; i < srcDoc.getPageCount(); i++) {
+    const [kp] = await novy.copyPages(srcDoc, [i]);
+    const { width: w, height: h } = kp.getSize();
+    kp.setSize(w + left + right, h + top + bottom);
+    kp.translateContent(left, bottom);
+    novy.addPage(kp);
+  }
+  return novy;
+}
+async function pridejOkraje(stahni_hned) {
+  if (stahni_hned) {
+    await spustAkci(async () => {
+      const doc = await _okrajeCore(await nactiUpravaDoc());
+      await ulozUprava(doc, 'okraje.pdf');
+    }, 'Přidání okrajů');
+  } else {
+    return _okrajeCore(await nactiUpravaDoc());
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ⑥ SMAZÁNÍ METADAT
+// ═══════════════════════════════════════════════════════════
+async function _smazMetaCore(doc) {
+  doc.setTitle(''); doc.setAuthor(''); doc.setSubject('');
+  doc.setKeywords([]); doc.setCreator(''); doc.setProducer('');
+  try { if (doc.catalog.has(PDFLib.PDFName.of('Metadata'))) doc.catalog.delete(PDFLib.PDFName.of('Metadata')); } catch(_){}
+  return doc;
+}
+async function smazMetadata(stahni_hned) {
+  if (stahni_hned) {
+    await spustAkci(async () => {
+      const doc = await _smazMetaCore(await nactiUpravaDoc());
+      await ulozUprava(doc, 'bez-metadat.pdf');
+    }, 'Smazání metadat');
+  } else {
+    return _smazMetaCore(await nactiUpravaDoc());
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ⑦ NASTAVENÍ METADAT
+// ═══════════════════════════════════════════════════════════
+async function _nastavMetaCore(doc) {
+  const n = document.getElementById('upr-meta-nazev').value.trim();
+  const a = document.getElementById('upr-meta-autor').value.trim();
+  const p = document.getElementById('upr-meta-predmet').value.trim();
+  const k = document.getElementById('upr-meta-klicovaSlova').value.trim();
+  if (n) doc.setTitle(n);
+  if (a) doc.setAuthor(a);
+  if (p) doc.setSubject(p);
+  if (k) doc.setKeywords(k.split(',').map(s => s.trim()).filter(Boolean));
+  doc.setCreator('Emilovy PDFka');
+  doc.setModificationDate(new Date());
+  return doc;
+}
+async function nastavMetadata(stahni_hned) {
+  if (stahni_hned) {
+    await spustAkci(async () => {
+      const doc = await _nastavMetaCore(await nactiUpravaDoc());
+      await ulozUprava(doc, 'metadata.pdf');
+    }, 'Nastavení metadat');
+  } else {
+    return _nastavMetaCore(await nactiUpravaDoc());
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ⑧ ZMENŠENÍ SOUBORU (resamplování přes Canvas → JPEG)
+// ═══════════════════════════════════════════════════════════
+async function _zmensCore() {
+  const kvalita = parseFloat(document.getElementById('upr-zmen-kvalita').value) || 0.8;
+  const meritko = parseFloat(document.getElementById('upr-zmen-meritko').value) || 1.0;
+  const buffer  = await soubory.uprava[0].arrayBuffer();
+  const pdfDok  = await pdfjsLib.getDocument({ data: buffer.slice() }).promise;
+  const novy    = await PDFLib.PDFDocument.create();
+  for (let i = 0; i < pdfDok.numPages; i++) {
+    nastavStav('uprava', 'Resampling stránka ' + (i+1) + ' / ' + pdfDok.numPages + '…', 'inf');
+    const pg   = await pdfDok.getPage(i + 1);
+    const vp   = pg.getViewport({ scale: meritko });
+    const cnv  = document.createElement('canvas');
+    cnv.width  = vp.width;
+    cnv.height = vp.height;
+    await pg.render({ canvasContext: cnv.getContext('2d'), viewport: vp }).promise;
+    const jpegBuf = await new Promise(res => cnv.toBlob(b => b.arrayBuffer().then(res), 'image/jpeg', kvalita));
+    const img  = await novy.embedJpg(jpegBuf);
+    const nova = novy.addPage([vp.width, vp.height]);
+    nova.drawImage(img, { x:0, y:0, width:vp.width, height:vp.height });
+  }
+  return novy;
+}
+async function zmensVelikost(stahni_hned) {
+  if (stahni_hned) {
+    await spustAkci(async () => {
+      const doc = await _zmensCore();
+      await ulozUprava(doc, 'zmenseny.pdf');
+    }, 'Zmenšení souboru');
+  } else {
+    return _zmensCore();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  HROMADNÝ EXPORT — provede všechny vybrané úpravy v řadě
+//  Řetězení: výstup každé úpravy = vstup další
+// ═══════════════════════════════════════════════════════════
+async function provedVsechnyVybrane() {
+  if (!soubory.uprava.length) { nastavStav('uprava','Nahrajte nejprve PDF soubor.','err'); return; }
+  const vybrane = Object.entries(upravaVybrane).filter(([,v])=>v).map(([k])=>k);
+  if (!vybrane.length) { nastavStav('uprava','Nejsou vybrány žádné úpravy.','err'); return; }
+
+  zobrazProgres('uprava', true);
+  nastavStav('uprava', 'Spouštím ' + vybrane.length + ' úprav…', 'inf');
+
+  // Mapování klíče → core funkce (přijímá doc, vrací doc)
+  const coreMap = {
+    format:   d => _upravFormatCore(d),
+    cislo:    d => _pridejCisloCore(d),
+    voda:     d => _vodoznamCore(d),
+    orez:     d => _orezCore(d),
+    okraje:   d => _okrajeCore(d),
+    smazMeta: d => _smazMetaCore(d),
+    meta:     d => _nastavMetaCore(d),
+    zmen:     _  => _zmensCore(),   // zmen vždy čte z soubory.uprava (pdf.js)
+  };
+
+  try {
+    let doc = await nactiUpravaDoc();
+
+    for (const klic of vybrane) {
+      nastavStav('uprava', 'Provádím: ' + klic + '…', 'inf');
+
+      if (klic === 'zmen') {
+        // zmensCore musí číst z soubory.uprava — dočasně nastavím aktuální stav jako soubor
+        const tmpBytes = await doc.save();
+        const tmpFile  = new File([tmpBytes], '_tmp.pdf', { type: 'application/pdf' });
+        const orig     = soubory.uprava;
+        soubory.uprava = [tmpFile];
+        doc = await _zmensCore();
+        soubory.uprava = orig;
+      } else {
+        doc = await coreMap[klic](doc);
+      }
+    }
+
+    await ulozUprava(doc, 'vsechny-upravy.pdf');
+
+  } catch(e) {
+    zobrazProgres('uprava', false);
+    nastavStav('uprava', '⚠️ Chyba při hromadném exportu: ' + e.message, 'err');
+    console.error(e);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  EXPORT PNG — stojí samostatně, mimo hromadný export
+// ═══════════════════════════════════════════════════════════
+async function extrahujPNG() {
+  if (!soubory.uprava.length) { nastavStav('uprava','Nahrajte nejprve PDF soubor.','err'); return; }
+  await spustAkci(async () => {
+    const strankyText = document.getElementById('upr-png-stranky').value;
+    const meritko     = parseFloat(document.getElementById('upr-png-meritko').value) || 2;
+    const buffer      = await soubory.uprava[0].arrayBuffer();
+    const pdfDok      = await pdfjsLib.getDocument({ data: buffer.slice() }).promise;
+    const celkem      = pdfDok.numPages;
+    const idxArr      = parsujStrankyUprava(strankyText, celkem);
+    const zaklad      = soubory.uprava[0].name.replace(/\.pdf$/i, '');
+    for (const idx of idxArr) {
+      nastavStav('uprava', 'PNG: stránka ' + (idx+1) + ' / ' + celkem + '…', 'inf');
+      const pg   = await pdfDok.getPage(idx + 1);
+      const vp   = pg.getViewport({ scale: meritko });
+      const cnv  = document.createElement('canvas');
+      cnv.width  = vp.width; cnv.height = vp.height;
+      await pg.render({ canvasContext: cnv.getContext('2d'), viewport: vp }).promise;
+      await new Promise(res => cnv.toBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        const a   = Object.assign(document.createElement('a'), { href:url, download: zaklad + '-strana-' + (idx+1) + '.png' });
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+        res();
+      }, 'image/png'));
+      await new Promise(r => setTimeout(r, 250));
+    }
+    nastavStav('uprava', '✅ Exportováno ' + idxArr.length + ' stránek jako PNG', 'ok');
+    zobrazProgres('uprava', false);
+  }, 'Export PNG');
+}
+</script>
+
+
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   HEX CANVAS KONFIGURACE — měním tady
+   Zdroj: hexagon-hover.html, přizpůsobeno pro epdfka
+   ═══════════════════════════════════════════════════════════════ */
+const HEX_SIZE   = 28;        /* ← velikost hexagonu (poloměr) — větší číslo = větší hex */
+const HEX_GAP    = 2;         /* ← mezera mezi hexagony v px */
+const HEX_FADE   = 0.035;     /* ← rychlost zhasínání po opuštění kurzorem (0.01=pomalu, 0.1=rychle) */
+const HEX_RADIUS = HEX_SIZE * 2.2;  /* ← poloměr oblasti hover efektu kolem kurzoru */
+
+/* Barva "spáry" mezi hexagony — viditelná mezera */
+const HEX_BORDER = '#c8cfe0';
+
+/* Základní barvy hexagonu (bez hoveru) — tří­stupňový gradient shora dolů */
+const BASE_TOP = '#EEF1F8';   /* ← barva horní části hex */
+const BASE_MID = '#dde2ee';   /* ← barva střední části */
+const BASE_BOT = '#cdd4e4';   /* ← barva dolní části */
+
+/* Hover palety — zelená a modrá z loga, náhodně přiřazeny každému hexu */
+const PALETTES = [
+  { bright: '#00AF3F', mid: '#008f32', dark: '#005a1e' },  /* zelená */
+  { bright: '#0000cc', mid: '#000099', dark: '#000055' },  /* modrá */
+];
+
+/* ═══════════════════════════════════════════════════════════════
+   CANVAS ENGINE — neměním (logika vykreslování)
+   ═══════════════════════════════════════════════════════════════ */
+const canvas = document.getElementById('hex-canvas');
+const ctx    = canvas.getContext('2d');
+
+let hexes = [];
+let mouse = { x: -9999, y: -9999 };
+
+/* Převod hex barvy na RGB trojici */
+function hexToRgb(hex) {
+  return [
+    parseInt(hex.slice(1,3), 16),
+    parseInt(hex.slice(3,5), 16),
+    parseInt(hex.slice(5,7), 16)
+  ];
+}
+
+/* Lineární interpolace čísla */
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+/* Interpolace dvou barev — vrátí CSS rgb() string */
+function lerpCol(a, b, t) {
+  const [ar,ag,ab] = hexToRgb(a);
+  const [br,bg,bb] = hexToRgb(b);
+  return `rgb(${Math.round(lerp(ar,br,t))},${Math.round(lerp(ag,bg,t))},${Math.round(lerp(ab,bb,t))})`;
+}
+
+/* Vrátí 6 vrcholů hexagonu se středem (cx,cy) a poloměrem r */
+function hexPts(cx, cy, r) {
+  const pts = [];
+  for (let i = 0; i < 6; i++) {
+    const a = Math.PI / 3 * i;   /* 0°, 60°, 120°, 180°, 240°, 300° */
+    pts.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]);
+  }
+  return pts;
+}
+
+/* Sestaví pole hexagonů pro aktuální rozměry canvasu */
+function buildGrid() {
+  hexes = [];
+  const H  = Math.sqrt(3) * HEX_SIZE;          /* výška hexagonu */
+  const dx = HEX_SIZE * 2 * 0.75 + HEX_GAP;   /* vodorovný krok (flat-top) */
+  const dy = H + HEX_GAP;                       /* svislý krok */
+  const cols = Math.ceil(canvas.width  / dx) + 3;
+  const rows = Math.ceil(canvas.height / dy) + 3;
+
+  for (let col = -1; col < cols; col++) {
+    for (let row = -1; row < rows; row++) {
+      const cx = col * dx;
+      /* Liché sloupce posunuty o půl výšky dolů — flat-top plástev */
+      const cy = row * dy + (col % 2 !== 0 ? H / 2 : 0);
+      hexes.push({
+        cx, cy,
+        glow: 0,   /* aktuální jas hoveru 0–1 */
+        /* Každý hex dostane náhodnou paletu (zelená nebo modrá) */
+        pal: PALETTES[Math.floor(Math.random() * PALETTES.length)]
+      });
+    }
+  }
+}
+
+/* Vykreslí jeden hexagon */
+function drawHex(h) {
+  const { cx, cy, glow: t, pal } = h;
+  const innerR = HEX_SIZE - HEX_GAP * 0.5;
+  const outerPts = hexPts(cx, cy, HEX_SIZE);
+  const innerPts = hexPts(cx, cy, innerR);
+
+  /* Vnější hexagon = barva spáry/mezery */
+  ctx.beginPath();
+  ctx.moveTo(...outerPts[0]);
+  outerPts.forEach(p => ctx.lineTo(...p));
+  ctx.closePath();
+  ctx.fillStyle = HEX_BORDER;
+  ctx.fill();
+
+  /* Vnitřní hexagon = barevný gradient */
+  ctx.beginPath();
+  ctx.moveTo(innerPts[0][0], innerPts[0][1]);
+  for (let i = 1; i < 6; i++) ctx.lineTo(innerPts[i][0], innerPts[i][1]);
+  ctx.closePath();
+
+  /* Barvy se interpolují mezi základní a hover paletou podle glow (0–1) */
+  const topFace = lerpCol(BASE_TOP, pal.bright, t);
+  const midFace = lerpCol(BASE_MID, pal.mid,    t * 0.85);
+  const botFace = lerpCol(BASE_BOT, pal.dark,   t * 0.6);
+
+  /* Lineární gradient shora dolů */
+  const g = ctx.createLinearGradient(cx, cy - HEX_SIZE, cx, cy + HEX_SIZE);
+  g.addColorStop(0,    topFace);
+  g.addColorStop(0.45, midFace);
+  g.addColorStop(1,    botFace);
+  ctx.fillStyle = g;
+  ctx.fill();
+
+  /* Světlý bevel vlevo nahoře — simuluje 3D */
+  ctx.beginPath();
+  ctx.moveTo(innerPts[4][0], innerPts[4][1]);
+  ctx.lineTo(innerPts[5][0], innerPts[5][1]);
+  ctx.lineTo(innerPts[0][0], innerPts[0][1]);
+  ctx.lineTo(innerPts[1][0], innerPts[1][1]);
+  ctx.strokeStyle = t > 0.05
+    ? `rgba(255,255,255,${0.35 + t * 0.35})`
+    : `rgba(255,255,255,0.45)`;
+  ctx.lineWidth = 1.5; ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  /* Tmavý bevel vpravo dole */
+  ctx.beginPath();
+  ctx.moveTo(innerPts[1][0], innerPts[1][1]);
+  ctx.lineTo(innerPts[2][0], innerPts[2][1]);
+  ctx.lineTo(innerPts[3][0], innerPts[3][1]);
+  ctx.lineTo(innerPts[4][0], innerPts[4][1]);
+  ctx.strokeStyle = `rgba(0,0,0,${0.08 + t * 0.08})`;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  /* Glow obrys při hover — svítí barvou palety */
+  if (t > 0.02) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(innerPts[0][0], innerPts[0][1]);
+    for (let i = 1; i < 6; i++) ctx.lineTo(innerPts[i][0], innerPts[i][1]);
+    ctx.closePath();
+    ctx.shadowColor  = pal.bright;
+    ctx.shadowBlur   = 18 * t;
+    ctx.strokeStyle  = `${pal.bright}${Math.round(t * 200).toString(16).padStart(2,'0')}`;
+    ctx.lineWidth    = 1.2;
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+/* Hlavní animační smyčka */
+function loop() {
+  /* Pozadí canvasu = barva spáry (viditelné v místech mimo hex) */
+  ctx.fillStyle = HEX_BORDER;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  hexes.forEach(h => {
+    /* Vzdálenost středu hexagonu od kurzoru */
+    const d = Math.hypot(mouse.x - h.cx, mouse.y - h.cy);
+    /* Hexagony v dosahu kurzoru se rozsvítí, ostatní postupně zhasínají */
+    h.glow = d < HEX_RADIUS
+      ? Math.min(1, h.glow + (1 - d / HEX_RADIUS) * 0.22)
+      : Math.max(0, h.glow - HEX_FADE);
+    drawHex(h);
+  });
+
+  requestAnimationFrame(loop);
+}
+
+/* Při změně velikosti okna přizpůsobím canvas a přestavím mřížku */
+function resize() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  buildGrid();
+}
+
+/* Trackuji pozici myši — při scrollování přidám scrollY aby pozice seděla */
+window.addEventListener('mousemove', e => {
+  mouse.x = e.clientX;
+  mouse.y = e.clientY;
+});
+
+/* Touch podpora pro mobily */
+window.addEventListener('touchmove', e => {
+  mouse.x = e.touches[0].clientX;
+  mouse.y = e.touches[0].clientY;
+}, { passive: true });
+
+/* Kurzor mimo okno — zhasnu vše */
+window.addEventListener('mouseleave', () => {
+  mouse.x = -9999;
+  mouse.y = -9999;
+});
+
+window.addEventListener('resize', resize);
+
+/* Spuštění */
+resize();
+loop();
+</script>
 </body>
 </html>
